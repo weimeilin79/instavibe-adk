@@ -1,0 +1,7 @@
+# /Users/linchr/Desktop/work/datecoach/agents/social/requirements.txt
+google-cloud-spanner
+google-generativeai
+google-adk
+python-dotenv
+fastapi 
+uvicorn 
