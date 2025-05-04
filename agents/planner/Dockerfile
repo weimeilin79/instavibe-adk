@@ -1,0 +1,37 @@
+# /Users/linchr/Desktop/work/datecoach/agents/social/Dockerfile
+
+# Use an official Python runtime as a parent image
+FROM python:3.12-slim
+
+# Set the working directory in the container
+WORKDIR /app
+
+# --- Dependency Installation ---
+# Copy only the requirements file first to leverage Docker cache
+COPY ./agents/planner/requirements.txt /app/requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Install the a2a common package (using pyproject.toml)
+COPY ./a2a /tmp/a2a-src
+WORKDIR /tmp/a2a-src
+RUN pip install --no-cache-dir .
+WORKDIR /app # Switch back to the main app directory
+RUN rm -rf /tmp/a2a-src # Clean up the source directory
+
+
+# --- Application Code ---
+COPY ./agents/planner /app/agents/planner
+COPY ./agents/planner/.env /app/agents/planner/.env
+
+# --- Environment ---
+ENV PYTHONPATH=/app/agents 
+
+
+# Make port 8080 available to the world outside this container
+# Cloud Run uses the PORT env var, but EXPOSE is good practice.
+EXPOSE 8080
+
+# --- Run the application ---
+# Run a2a_server.py when the container launches
+# Use the module execution '-m' which works well with the PYTHONPATH setup
+CMD ["python", "-m", "planner.a2a_server"]

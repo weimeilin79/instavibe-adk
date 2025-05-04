@@ -1,0 +1,3 @@
+google-cloud-aiplatform[adk,agent_engines]>=1.90.0
+google-adk
+python-dateutil
