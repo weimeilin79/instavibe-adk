@@ -1,17 +1,24 @@
-from vertexai.preview import reasoning_engines
-from ..planner import agent
+from orchestrate import agent
+from vertexai import agent_engines
+from vertexai.preview.reasoning_engines import AdkApp
 
 root_agent = agent.root_agent
 
 
-display_name = "Planning Agent"
+display_name = "Orchestrate Agent"
 
 description = """
-An agent that has access to tools for helping user planning a night out with it's desire location
-
+  This is the agent responsible for choosing which remote agents to send
+  tasks to and coordinate their work on helping user to get social 
 """
 
-app = reasoning_engines.AdkApp(
+app = AdkApp(
     agent=root_agent,
     enable_tracing=True,
+)
+
+
+remote_agent = agent_engines.create(
+    agent,
+    requirements="./requirements.txt",
 )

@@ -23,11 +23,13 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+
+
 # --- Configuration ---
 REMOTE_AGENT_ADDRESSES = [
-    "http://localhost:10001", # e.g., Social Agent
-    "http://localhost:10002", # e.g., Planner Agent
-    "http://localhost:10003", # e.g., IntrovertAlly Agent (adjust port if needed)
+    "https://social-agent-service-789872749985.us-central1.run.app", 
+    "https://planner-agent-service-789872749985.us-central1.run.app", 
+    "https://platform-mcp-client-789872749985.us-central1.run.app",
 ]
 USER_ID = "orchestrator_user"
 APP_NAME = "datecoach_orchestrator"
@@ -97,13 +99,13 @@ async def async_main():
     print(f"Connecting to remote agents at: {', '.join(REMOTE_AGENT_ADDRESSES)}")
 
     # 1. Instantiate HostAgent with addresses and the callback
-    host_agent_logic = HostAgent(
+    orchestrator_agent_logic = HostAgent(
         remote_agent_addresses=REMOTE_AGENT_ADDRESSES,
         task_callback=print_task_update
     )
 
     # 2. Create the underlying ADK Agent
-    orchestrator_agent = host_agent_logic.create_agent()
+    orchestrator_agent = orchestrator_agent_logic.create_agent()
     print(f"Orchestrator Agent '{orchestrator_agent.name}' created.")
 
     # 3. Set up the ADK Runner

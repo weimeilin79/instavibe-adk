@@ -13,8 +13,8 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 host=os.environ.get("A2A_HOST", "localhost")
-port=int(os.environ.get("A2A_PORT",10002))
-
+port=int(os.environ.get("A2A_PORT",10003))
+PUBLIC_URL=os.environ.get("PUBLIC_URL")
 
 def main():
     try:
@@ -29,7 +29,7 @@ def main():
         agent_card = AgentCard(
             name="NightOut Planner Agent",
             description="This agent helps user planning a night out with it's desire location.",
-            url=f"http://{host}:{port}/",
+            url=f"{PUBLIC_URL}",
             version="1.0.0",
             defaultInputModes=PlannerAgent.SUPPORTED_CONTENT_TYPES,
             defaultOutputModes=PlannerAgent.SUPPORTED_CONTENT_TYPES,
@@ -42,6 +42,9 @@ def main():
             host=host,
             port=port,
         )
+        logger.info(f"Attempting to start server with Agent Card: {agent_card.name}")
+        logger.info(f"Server object created: {server}")
+        
         server.start()
     except Exception as e:
         logger.error(f"An error occurred during server startup: {e}")

@@ -22,6 +22,7 @@ log = logging.getLogger(__name__)
 # Defaulting to empty list if not set. Adjust as needed.
 REMOTE_AGENT_ADDRESSES_STR = os.getenv("REMOTE_AGENT_ADDRESSES", "")
 REMOTE_AGENT_ADDRESSES = [addr.strip() for addr in REMOTE_AGENT_ADDRESSES_STR.split(',') if addr.strip()]
+log.info(f"Remote Agent Addresses: {REMOTE_AGENT_ADDRESSES}")
 
 # --- Agent Initialization ---
 # Instantiate the HostAgent logic class

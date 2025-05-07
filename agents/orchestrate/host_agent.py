@@ -34,7 +34,7 @@ from common.types import (
 
 
 class HostAgent:
-  """The host agent.
+  """The orchestrate agent.
 
   This is the agent responsible for choosing which remote agents to send
   tasks to and coordinate their work.
@@ -71,7 +71,7 @@ class HostAgent:
   def create_agent(self) -> Agent:
     return Agent(
         model="gemini-2.0-flash-001",
-        name="host_agent",
+        name="orchestrate_agent",
         instruction=self.root_instruction,
         before_model_callback=self.before_model_callback,
         description=(
