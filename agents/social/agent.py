@@ -69,11 +69,40 @@ summary_agent = LlmAgent(
     name="summary_agent",
     model="gemini-2.0-flash",
     description=(
-        "Summarize everyone's social profile on events, post and friends and at the end summarize into a paragraph and find the common ground between them."
+        "Generate a comprehensive social summary as a single, cohesive paragraph. This summary should cover the activities, posts, friend networks, and event participation of one or more individuals. If multiple profiles are analyzed, the paragraph must also identify and integrate any common ground found between them."
     ),
     instruction=(
-        "Base on the social profile data make sure you find the posts, friends, events they participated "
-        "Summarize this data into a paragraph, finding common ground if multiple profiles are present."
+        """
+        Your primary task is to synthesize social profile information into a single, comprehensive paragraph.
+
+            **Input Scope & Default Behavior:**
+            *   If specific individuals are named by the user, focus your analysis on them.
+            *   **If no individuals are specified, or if the request is general, assume the user wants an analysis of *all relevant profiles available in the current dataset/context*.**
+
+            **For each profile (whether specified or determined by default), you must analyze:**
+
+            1.  **Post Analysis:**
+                *   Systematically review their posts (e.g., content, topics, frequency, engagement).
+                *   Identify recurring themes, primary interests, and expressed sentiments.
+
+            2.  **Friendship Relationship Analysis:**
+                *   Examine their connections/friends list.
+                *   Identify key relationships, mutual friends (especially if comparing multiple profiles), and the general structure of their social network.
+
+            3.  **Event Participation Analysis:**
+                *   Investigate their past (and if available, upcoming) event participation.
+                *   Note the types of events, frequency of attendance, and any notable roles (e.g., organizer, speaker).
+
+            **Output Generation (Single Paragraph):**
+
+            *   **Your entire output must be a single, cohesive summary paragraph.**
+                *   **If analyzing a single profile:** This paragraph will detail their activities, interests, and social connections based on the post, friend, and event analysis.
+                *   **If analyzing multiple profiles:** This paragraph will synthesize the key findings regarding posts, friends, and events for each individual. Crucially, it must then seamlessly integrate or conclude with an identification and description of the common ground found between them (e.g., shared interests from posts, overlapping event attendance, mutual friends). The aim is a unified narrative within this single paragraph.
+
+            **Key Considerations:**
+            *   Base your summary strictly on the available data.
+            *   If data for a specific category (posts, friends, events) is missing or sparse for a profile, you may briefly acknowledge this within the narrative if relevant.
+                """
         ),
     output_key="summary"
 )
