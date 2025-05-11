@@ -1,0 +1,162 @@
+{% extends "base.html" %}
+
+{% block title %}Event: {{ event.name if event else "Details" }} - Instavibe{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    {% if error %}
+        <div class="alert alert-danger" role="alert">
+            Could not load event details. Please try again later.
+        </div>
+    {% elif event %}
+        <div class="card">
+            <div class="card-header">
+                <h2>{{ event.name }}</h2>
+            </div>
+            <div class="card-body">
+                <p class="card-text"><strong>Date:</strong> {{ event.event_date | humanize_datetime if event.event_date else 'N/A' }}</p>
+                {% if event.description %}
+                    <p class="card-text"><strong>Description:</strong> {{ event.description }}</p>
+                {% endif %}
+
+                {% if event.locations and event.locations|length > 0 %}
+                    <h5 class="mt-4">Location(s):</h5>
+                    {% if google_maps_api_key %}
+                        <div id="eventMap" style="height: 400px; width: 100%;" class="mb-3"></div>
+                    {% else %}
+                        <div class="alert alert-warning">Map display is unavailable (API key missing).</div>
+                        <ul>
+                        {% for loc in event.locations %}
+                            <li>
+                                <strong>{{ loc.name }}</strong>{% if loc.address %} ({{ loc.address }}){% endif %}<br>
+                                {% if loc.description %}<small>{{ loc.description }}</small>{% endif %}
+                            </li>
+                        {% endfor %}
+                        </ul>
+                    {% endif %}
+                {% else %}
+                    <p><em>No specific locations listed for this event.</em></p>
+                {% endif %}
+
+                <h5 class="mt-4">Attendees ({{ event.attendees|length }}):</h5>
+                {% if event.attendees and event.attendees|length > 0 %}
+                    <ul class="list-group list-group-flush">
+                        {% for attendee in event.attendees %}
+                            <li class="list-group-item">
+                                <a href="{{ url_for('person_profile', person_id=attendee.person_id) }}">{{ attendee.name }}</a>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p><em>No attendees listed yet.</em></p>
+                {% endif %}
+            </div>
+            <div class="card-footer">
+                <a href="{{ url_for('home') }}" class="btn btn-secondary">Back to Home</a>
+            </div>
+        </div>
+    {% else %}
+        <div class="alert alert-info" role="alert">
+            Event not found.
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    console.log("DEBUG: event_detail.html - scripts block has started processing.");
+</script>
+{{ super() }} {# Restore super() to include base scripts if any #}
+{% if event and event.locations and event.locations|length > 0 and google_maps_api_key %}
+<script>
+    console.log("DEBUG: Google Maps script block IS BEING RENDERED.");
+    console.log("DEBUG: API Key in JS:", "{{ google_maps_api_key | e }}");
+    console.log("DEBUG: Event data in JS:", {{ event | tojson }});
+    console.log("DEBUG: Event locations in JS:", {{ event.locations | tojson }});
+
+    let map;
+    let markers = [];
+    const mapId = '{{ google_maps_map_id }}'; // Get Map ID from template context
+
+    const eventLocations = {{ event.locations | tojson }};
+
+    function initMap() {
+        console.log("initMap called.");
+        console.log("Event Locations Data:", eventLocations);
+        const mapDiv = document.getElementById("eventMap");
+
+        if (!mapDiv) {
+            console.error("Map div #eventMap not found!");
+            return;
+        }
+        if (eventLocations.length === 0) {
+            mapDiv.innerHTML = '<p>No location data to display on map.</p>';
+            console.log("No event locations to display.");
+            
+            return;
+        }
+
+        // Default center to the first location, or a generic point
+        let initialCenter = { lat: 0, lng: 0 }; // Default to (0,0) if no valid locations
+        const firstValidLocation = eventLocations.find(loc => loc.latitude != null && loc.longitude != null);
+        if (firstValidLocation) {
+            initialCenter = { lat: parseFloat(firstValidLocation.latitude), lng: parseFloat(firstValidLocation.longitude) };
+        }
+        console.log("Initial map center:", initialCenter);
+
+
+        map = new google.maps.Map(mapDiv, {
+            center: initialCenter,
+            zoom: firstValidLocation ? (eventLocations.filter(loc => loc.latitude != null && loc.longitude != null).length > 1 ? 10 : 14) : 2,
+        });
+
+        const bounds = new google.maps.LatLngBounds();
+
+        eventLocations.forEach(function(location) {
+            if (location.latitude != null && location.longitude != null) {
+                const position = { lat: parseFloat(location.latitude), lng: parseFloat(location.longitude) };
+                const marker = new google.maps.Marker({
+                    position: position,
+                    map: map,
+                    title: location.name
+                });
+
+                const infowindow = new google.maps.InfoWindow({
+                    content: `<h6>${location.name}</h6><p>${location.description || ''}</p><small>${location.address || ''}</small>`
+                });
+
+                marker.addListener('click', () => {
+                    infowindow.open(map, marker);
+                });
+                markers.push(marker);
+                bounds.extend(position);
+            }
+        });
+        if (markers.length === 0) {
+            console.warn("No valid markers were created. Map might appear blank or at default center.");
+            mapDiv.innerHTML = '<p>No valid location data could be mapped.</p>';
+        } else if (markers.length > 1) {
+            map.fitBounds(bounds);
+        } else if (markers.length === 1) {
+            map.setCenter(markers[0].getPosition()); // Center on the single marker
+            map.setZoom(14); 
+        }
+    }
+</script>
+<script async defer src="https://maps.googleapis.com/maps/api/js?key={{ google_maps_api_key }}&callback=initMap"></script>
+{% else %}
+<script>
+    console.log("DEBUG: Google Maps script block was NOT RENDERED. Checking conditions:");
+    console.log("DEBUG: 'event' object present:", {{ event is defined and event != None }});
+    {% if event is defined and event != None %}
+    console.log("DEBUG: 'event.name' (sample data):", "{{ event.name | e if event.name else 'N/A' }}");
+    console.log("DEBUG: 'event.locations' present:", {{ event.locations is defined }});
+    console.log("DEBUG: 'event.locations' has items (length > 0):", {{ event.locations|length > 0 if event.locations is defined else 'false (locations undefined)' }});
+    console.log("DEBUG: 'event.locations' actual data:", {{ event.locations | tojson if event.locations is defined else 'undefined' }});
+    {% endif %}
+    console.log("DEBUG: 'google_maps_api_key' present and not empty:", "{{ google_maps_api_key | e }}" !== "");
+    console.log("DEBUG: 'google_maps_api_key' value (first 5 chars):", "{{ google_maps_api_key[:5] | e if google_maps_api_key else 'EMPTY' }}");
+</script>
+{% endif %}
+{% endblock %}

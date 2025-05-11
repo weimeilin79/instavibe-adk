@@ -1,0 +1,4 @@
+google-cloud-aiplatform[adk,agent_engines]>=1.90.0
+Flask
+google-cloud-spanner
+humanize

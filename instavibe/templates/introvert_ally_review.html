@@ -1,0 +1,238 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title or "Review Plan" }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>{{ title or "Review Your Generated Plan" }}</h2>
+    <hr>
+    <div class="row">
+        <!-- Left Column: Plan Details -->
+        <div class="col-md-7">
+            <h4>Plan Details</h4>
+            <div id="planDetailsCard" class="card" style="display: none;"> <!-- Initially hidden -->
+                <div class="card-header">
+                    <h5 id="planEventName">Generating Plan <img src="/static/loading.gif" alt="Loading Spinner" style="width:40px;"></h5>
+                </div>
+                <div class="card-body">
+                    <p><strong>Friends Invited:</strong> <span id="planFriendsList"></span></p>
+                    <p><strong>Description:</strong> <span id="planEventDescription"></span></p>
+
+                    <h6>Locations & Activities:</h6>
+                    <ul id="planLocationsList" class="list-group list-group-flush">
+                        <!-- Locations will be populated by JS -->
+                    </ul>
+
+                    <h6 class="mt-3">Suggested Invite Message:</h6>
+                    <form id="confirmPlanForm" method="POST" action="{{ url_for('ally.confirm_introvert_ally_plan') }}">
+                        <div class="form-group">
+                            <input type="hidden" name="confirmed_plan_json" id="confirmedPlanJsonInput">
+                            <textarea id="planInviteMessage" name="edited_invite_message" class="form-control" rows="5" placeholder="Invite message will appear here..."></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-success mt-2" disabled>Confirm This Plan</button>
+                        <a href="{{ url_for('ally.introvert_ally_page') }}" class="btn btn-secondary mt-2">Cancel & Go Back</a>
+                    </form>
+                </div>
+            </div>
+            <div id="planLoadingState" class="alert alert-info">
+                <p><i class="fas fa-spinner fa-spin"></i> Your personalized plan is being generated. Please wait...</p>
+                <p>You'll see the agent's process on the right as it works.</p>
+            </div>
+            <div id="planErrorState" class="alert alert-danger" style="display: none;">
+                <h4>Plan Generation Failed</h4>
+                <p id="planErrorMessage"></p>
+                <p><strong>Agent's raw output (if any):</strong></p>
+                <pre><code id="planErrorRawOutput"></code></pre>
+                <a href="{{ url_for('ally.introvert_ally_page') }}" class="btn btn-primary mt-3">Try Again</a>
+            </div>
+        </div>
+
+        <!-- Right Column: Agent Thoughts Stream -->
+        <div class="col-md-5">
+            <h4>Agent's Process</h4>
+            <div class="card" >
+                <div class="card-header">
+                    Live Log
+                </div>
+                <div id="agentThoughtsStream" class="card-body" style="max-height: 600px; overflow-y: auto; font-size: 0.85em;">
+                    <ul class="list-unstyled">
+                        <!-- Thoughts will be populated by JS -->
+                    </ul>
+                    <p id="thoughtsPlaceholder">Waiting for agent to start processing...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const thoughtsStreamUl = document.querySelector('#agentThoughtsStream ul');
+    const thoughtsPlaceholder = document.getElementById('thoughtsPlaceholder');
+
+    const planDetailsCard = document.getElementById('planDetailsCard');
+    const planLoadingState = document.getElementById('planLoadingState');
+    const planErrorState = document.getElementById('planErrorState');
+
+    const planEventName = document.getElementById('planEventName');
+    const planFriendsList = document.getElementById('planFriendsList');
+    const planEventDescription = document.getElementById('planEventDescription');
+    const planLocationsList = document.getElementById('planLocationsList');
+    const planInviteMessageTextarea = document.getElementById('planInviteMessage');
+    const confirmButton = document.querySelector('#confirmPlanForm button[type="submit"]');
+
+    const planErrorMessage = document.getElementById('planErrorMessage');
+    const planErrorRawOutput = document.getElementById('planErrorRawOutput');
+
+    // Check if elements exist before trying to use them, in case the HTML structure is different than expected
+    // This is important if the HTML was the version before we added the dynamic elements.
+    // For this diff, we assume the HTML structure from the *previous* turn (with dynamic placeholders) is the target.
+    // If you're applying this to the HTML you just showed me, you'd need to ensure IDs like 'agentThoughtsStream', 
+    // 'planDetailsCard', etc., are present in your HTML structure.
+    // The HTML diff from my previous response (message_id: 20250510213529) updated the body of the review page.
+    // This script block assumes that HTML structure.
+
+    if (!document.getElementById('agentThoughtsStream')) {
+        console.error("Required HTML element #agentThoughtsStream not found. SSE will not function correctly.");
+        // If you are applying this to the HTML version you just showed, that version doesn't have the dynamic placeholders.
+        // You'd need the HTML changes from my previous response (message_id: 20250510213529) first.
+        return; // Stop if essential elements are missing
+    }
+
+
+    const eventSource = new EventSource("{{ url_for('ally.stream_introvert_ally_plan') }}");
+    console.log("SSE: EventSource created for URL: {{ url_for('ally.stream_introvert_ally_plan') }}");
+
+    eventSource.onopen = function() {
+        console.log("SSE: Connection opened.");
+        if(thoughtsPlaceholder) thoughtsPlaceholder.textContent = "Agent connection established. Waiting for process updates...";
+    };
+
+    eventSource.addEventListener('thought', function(event) {
+        console.log("SSE: 'thought' event received, data:", event.data);
+        if(thoughtsPlaceholder && thoughtsPlaceholder.style.display !== 'none') {
+            thoughtsPlaceholder.style.display = 'none';
+        }
+        const thoughtData = JSON.parse(event.data);
+        const li = document.createElement('li');
+        li.innerHTML = `<small class="text-muted">&raquo; ${escapeHtml(thoughtData)}</small>`;
+        thoughtsStreamUl.appendChild(li);
+        // Auto-scroll to bottom
+        const thoughtsContainer = document.getElementById('agentThoughtsStream');
+        thoughtsContainer.scrollTop = thoughtsContainer.scrollHeight;
+    });
+
+    eventSource.addEventListener('plan_complete', function(event) {
+        console.log("SSE: 'plan_complete' event received, data:", event.data);
+        const plan = JSON.parse(event.data);
+
+        if (planLoadingState) planLoadingState.style.display = 'none';
+        if (planErrorState) planErrorState.style.display = 'none';
+        if (planDetailsCard) planDetailsCard.style.display = 'block';
+
+        if (planEventName) planEventName.textContent = plan.event_name || "Unnamed Event";
+        if (planFriendsList) planFriendsList.textContent = (plan.friends_name_list || []).join(", ");
+        if (planEventDescription) planEventDescription.textContent = plan.event_description || "No description provided.";
+        if (planInviteMessageTextarea) planInviteMessageTextarea.value = plan.post_to_go_out || "No invite message generated.";
+        if (document.getElementById('confirmedPlanJsonInput')) document.getElementById('confirmedPlanJsonInput').value = JSON.stringify(plan);
+
+        if (planLocationsList) {
+            planLocationsList.innerHTML = ''; // Clear previous
+            if (plan.locations_and_activities && plan.locations_and_activities.length > 0) {
+                plan.locations_and_activities.forEach(loc => {
+                    const li = document.createElement('li');
+                    li.classList.add('list-group-item');
+                    let locHtml = `<strong>${escapeHtml(loc.name)}</strong>`;
+                    if (loc.address) locHtml += `<br><small class="text-muted">${escapeHtml(loc.address)}</small>`;
+                    if (loc.latitude && loc.longitude) locHtml += `<br><small class="text-muted">Lat: ${loc.latitude}, Lon: ${loc.longitude}</small>`;
+                    locHtml += `<p>${escapeHtml(loc.description)}</p>`;
+                    li.innerHTML = locHtml;
+                    planLocationsList.appendChild(li);
+                });
+            } else {
+                const li = document.createElement('li');
+                li.classList.add('list-group-item');
+                li.textContent = "No specific locations or activities listed.";
+                planLocationsList.appendChild(li);
+            }
+        }
+        if (confirmButton) confirmButton.disabled = false;
+        eventSource.close();
+        console.log("SSE: Connection closed after 'plan_complete'.");
+    });
+
+    eventSource.addEventListener('error', function(event) { // Catches SSE errors and our custom 'error' event type
+        console.error("SSE: 'error' event (or native SSE error) received:", event);
+        let errorData;
+        try {
+            errorData = JSON.parse(event.data); // Our custom error event
+        } catch (e) {
+            errorData = { message: "An unknown streaming error occurred or connection was lost." };
+        }
+
+        if(planLoadingState) planLoadingState.style.display = 'none';
+        if(planDetailsCard) planDetailsCard.style.display = 'none';
+        if(planErrorState) planErrorState.style.display = 'block';
+
+        if(planErrorMessage) planErrorMessage.textContent = errorData.message || "Plan generation failed.";
+        if(planErrorRawOutput) planErrorRawOutput.textContent = errorData.raw_output || "No raw output available.";
+        if(document.getElementById('confirmedPlanJsonInput')) document.getElementById('confirmedPlanJsonInput').value = ''; 
+        
+        if (event.type !== 'error' || (event.target && event.target.readyState === EventSource.CLOSED)) {
+            eventSource.close();
+            console.log("SSE: Connection closed after 'error' event or native SSE error.");
+        }
+    });
+
+     eventSource.addEventListener('stream_end', function(event) {
+        console.log("SSE: 'stream_end' event received.");
+        eventSource.close();
+        if (planDetailsCard && planDetailsCard.style.display === 'none' && planErrorState && planErrorState.style.display === 'none') {
+            if(planLoadingState) planLoadingState.style.display = 'none';
+            if(planErrorState) planErrorState.style.display = 'block';
+            if(planErrorMessage) planErrorMessage.textContent = "Stream ended but no plan or error was received. Please try again.";
+            if(document.getElementById('confirmedPlanJsonInput')) document.getElementById('confirmedPlanJsonInput').value = ''; 
+        }
+        console.log("SSE: Connection closed after 'stream_end'.");
+    });
+
+    function escapeHtml(unsafe) {
+        if (typeof unsafe !== 'string') {
+            if (unsafe === null || typeof unsafe === 'undefined') return '';
+            unsafe = String(unsafe);
+        }
+        return unsafe
+             .replace(/&/g, "&amp;")
+             .replace(/</g, "&lt;")
+             .replace(/>/g, "&gt;")
+             .replace(/"/g, "&quot;")
+             .replace(/'/g, "&#039;");
+    }
+
+    // Fallback for page reload if plan was already completed and stored in session
+    // This part of the script relies on Jinja variables `plan` and `is_error_plan`
+    // being passed to the template if the page is reloaded *after* the SSE stream has finished.
+    {% if plan and not is_error_plan %}
+        console.log("JS: Plan data found in initial template render (page reload after completion). Closing SSE.");
+        eventSource.close(); 
+        if(planLoadingState) planLoadingState.style.display = 'none';
+        if(planDetailsCard) planDetailsCard.style.display = 'block';
+        if(planEventName) planEventName.textContent = "{{ plan.event_name | default('Unnamed Event') | e }}";
+        // ... (rest of the fallback logic from previous script version) ...
+        if(confirmButton) confirmButton.disabled = false;
+        if(document.getElementById('confirmedPlanJsonInput')) document.getElementById('confirmedPlanJsonInput').value = JSON.stringify({{ plan | tojson | safe }});
+    {% elif is_error_plan and plan %}
+        console.log("JS: Error plan data found in initial template render. Closing SSE.");
+        eventSource.close();
+        if(planLoadingState) planLoadingState.style.display = 'none';
+        if(planDetailsCard) planDetailsCard.style.display = 'none';
+        if(planErrorState) planErrorState.style.display = 'block';
+        if(planErrorMessage) planErrorMessage.textContent = "{{ plan.error | e }}";
+        if(planErrorRawOutput) planErrorRawOutput.textContent = "{{ plan.raw_output | e }}";
+        if(document.getElementById('confirmedPlanJsonInput')) document.getElementById('confirmedPlanJsonInput').value = '';
+    {% endif %}
+});
+</script>
+{% endblock %}

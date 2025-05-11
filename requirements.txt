@@ -7,3 +7,6 @@ python-dateutil
 humanize
 nest_asyncio
 asyncclick
+google-adk[eval]
+build
+./agents/a2a_common-0.1.0-py3-none-any.whl

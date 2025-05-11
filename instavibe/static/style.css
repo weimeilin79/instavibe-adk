@@ -1,0 +1,172 @@
+/* static/style.css */
+
+body {
+    padding-top: 6rem; /* Adjusted for a shorter navbar (e.g., ~56-60px high) */
+    background-color: #fafafa; /* Lighter grey, common in minimalist UIs */
+    color: #262626; /* Default text color */
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; /* Common UI font stack */
+}
+
+/* --- Navbar Styling (Optional: Make it white like IG) --- */
+.navbar {
+    background-color: #ffffff !important; /* Override bg-primary */
+    border-bottom: 1px solid #dbdbdb;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+}
+.navbar .navbar-brand,
+.navbar .nav-link {
+    color: #262626 !important; /* Dark text on white */
+}
+
+.navbar .navbar-brand {
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+}
+
+.navbar .nav-link.active {
+    font-weight: 600; /* Bold active link */
+}
+
+
+/* --- Main Content Area --- */
+.main-content-area {
+    max-width: 975px; /* Typical max width for content */
+    margin: 20px auto; /* Center the content area */
+    padding: 0 20px; /* Padding on smaller screens */
+}
+
+
+/* --- Feed Styling --- */
+.main-feed {
+    /* Remove specific background/shadow from the container */
+    margin-bottom: 20px;
+}
+
+
+/* --- Post Card Styling --- */
+.post-card {
+    background-color: #ffffff;
+    border: 1px solid #dbdbdb; /* Subtle border */
+    border-radius: 3px; /* Sharper corners */
+    margin-bottom: 25px; /* More spacing */
+    overflow: hidden; /* Ensure border-radius applies */
+}
+
+.post-card .card-header { /* Optional: Add a header for author */
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    border-bottom: 1px solid #dbdbdb;
+    background-color: #fff;
+}
+
+.post-card .card-body {
+    padding: 16px;
+}
+
+.post-card .card-title { /* Style the author name link */
+    margin-bottom: 0; /* Remove default margin */
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.post-card .card-subtitle { /* Timestamp */
+    font-size: 0.75rem; /* Smaller */
+    color: #8e8e8e;
+    margin-top: 5px; /* Add space below author */
+    display: block; /* Ensure it takes its own line if needed */
+}
+
+.post-card .card-text {
+    font-size: 0.9rem;
+    line-height: 1.4;
+    margin-top: 10px; /* Space above text */
+    margin-bottom: 10px; /* Space below text */
+}
+
+/* --- Post Actions (Placeholders) --- */
+.post-actions {
+    padding: 8px 16px;
+    border-top: 1px solid #efefef;
+    font-size: 0.9rem; /* Reduced size */
+    color: #8e8e8e;
+}
+
+.post-actions span { /* Style for placeholder text/icons */
+    margin-right: 15px;
+    cursor: pointer;
+}
+.post-actions span:hover {
+    color: #262626;
+}
+
+/* --- Profile Link --- */
+.profile-link {
+    font-weight: 600;
+    color: #262626;
+    text-decoration: none;
+}
+.profile-link:hover {
+    text-decoration: none; /* IG usually doesn't underline */
+}
+
+
+/* --- Side Panel (Events/Friends) --- */
+.side-panel {
+    margin-bottom: 20px;
+    font-size: 0.9rem;
+}
+
+/* The VISUAL box styling used for Events (and potentially Friends) */
+.event-panel-box {
+    background-color: #ffffff;
+    border: 1px solid #dbdbdb;
+    border-radius: 3px;
+    padding: 16px;
+}
+
+/* The content area inside the panel */
+/* overflow-y allows scrolling if list is long, max-height removed */
+.side-panel-content {
+    overflow-y: auto;
+}
+
+/* Styles for elements INSIDE the panel (apply on both pages) */
+.side-panel .panel-title {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 15px;
+    color: #8e8e8e;
+}
+
+.side-panel .list-group-item {
+    border: none;
+    padding: .5rem 0;
+    background-color: transparent;
+}
+
+.side-panel .event-name,
+.side-panel .friend-list-item .profile-link {
+    font-weight: 600;
+    color: #262626;
+}
+
+.side-panel .event-date {
+    font-size: 0.8em;
+    color: #8e8e8e;
+}
+
+.side-panel .attendee-list-item {
+    margin-top: 5px;
+}
+
+.side-panel .attendee-name {
+    font-size: 0.9em;
+    padding-left: 15px;
+    font-weight: normal;
+}
+
+.side-panel small.text-muted {
+    font-size: 0.85em;
+}

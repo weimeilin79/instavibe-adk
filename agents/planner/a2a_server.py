@@ -22,13 +22,21 @@ def main():
         skill = AgentSkill(
             id="night_out_planner",
             name="Night out planner",
-            description="Help user planning a night out with it's desire location.",
+            description="""
+            This agent generates multiple fun plan suggestions tailored to your specified location, dates, and interests, 
+            all designed for a moderate budget. It delivers detailed itineraries, 
+            including precise venue information (name, latitude, longitude, and description), in a structured JSON format.
+            """,
             tags=["instavibe"],
             examples=["What about Bostona MA this weekend?"],
         )
         agent_card = AgentCard(
             name="NightOut Planner Agent",
-            description="This agent helps user planning a night out with it's desire location.",
+            description="""
+            This agent generates multiple fun plan suggestions tailored to your specified location, dates, and interests, 
+            all designed for a moderate budget. It delivers detailed itineraries, 
+            including precise venue information (name, latitude, longitude, and description), in a structured JSON format.
+            """,
             url=f"{PUBLIC_URL}",
             version="1.0.0",
             defaultInputModes=PlannerAgent.SUPPORTED_CONTENT_TYPES,

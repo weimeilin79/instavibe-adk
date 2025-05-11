@@ -22,13 +22,21 @@ def main():
         skill = AgentSkill(
             id="instavibe_posting",
             name="Post social post and events on instavibe",
-            description="Helps with the posting event and post.",
+            description="""
+            This "Instavibe" agent helps you create posts (identifying author, text, and sentiment – inferred if unspecified) and register 
+            for events (gathering name, date, attendee). It efficiently collects required information and utilizes dedicated tools 
+            to perform these actions on your behalf, ensuring a smooth sharing experience.
+            """,
             tags=["instavibe"],
             examples=["Create an post for me, the post is about my cute cat and make it positive, and I'm Alice"],
         )
         agent_card = AgentCard(
             name="Instavibe Posting Agent",
-            description="This agent helps with posting event and post on instavibe ",
+            description="""
+            This "Instavibe" agent helps you create posts (identifying author, text, and sentiment – inferred if unspecified) and register 
+            for events (gathering name, date, attendee). It efficiently collects required information and utilizes dedicated tools 
+            to perform these actions on your behalf, ensuring a smooth sharing experience.
+            """,
             url=f"{PUBLIC_URL}",
             version="1.0.0",
             defaultInputModes=PlatformAgent.SUPPORTED_CONTENT_TYPES,

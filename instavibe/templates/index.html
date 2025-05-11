@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% import "_macros.html" as macros %}
+
+{% block title %}Home Feed - InstaVibe{% endblock %}
+
+{% block content %}
+<div class="row"> {# Main row containing BOTH columns #}
+
+    <!-- Main Feed Column -->
+    <div class="col-md-7 col-lg-7">
+        <div class="main-feed">
+            {% if posts %}
+                {% for post in posts %}
+                    {{ macros.render_post(post) }}
+                {% else %}
+                    <p class="text-muted text-center mt-5">No posts found.</p>
+                {% endfor %}
+            {% else %}
+                <p class="text-muted text-center mt-5">No posts to display.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Right Sidebar Column: Events -->
+    <div class="col-md-5 col-lg-5 d-none d-md-block">
+        {# REMOVED position-sticky and style="top: 6rem;" from the div below #}
+        <div class="side-panel event-panel-box">
+            {# Inner div still handles potential scrolling if list is very long #}
+            <div class="side-panel-content">
+                <h3 class="panel-title">Events</h3>
+                {% if all_events_attendance %}
+                    <ul class="list-group list-group-flush">
+                        {% for event_info in all_events_attendance %}
+                        <li class="list-group-item event-list-item">
+                            <div class="event-name"> <a href="{{ url_for('event_detail_page', event_id=event_info.details.event_id) }}">
+                                {{ event_info.details.name }}
+                            </a></div>
+                            <div class="event-date">{{ event_info.details.event_date | humanize_datetime }}</div>
+                            {% if event_info.attendees %}
+                                <small class="d-block text-muted mt-1">Attendees:</small>
+                                <ul class="list-unstyled mt-1">
+                                {% for attendee in event_info.attendees %}
+                                    <li class="attendee-list-item">
+                                        <a href="{{ url_for('person_profile', person_id=attendee.person_id) }}" class="profile-link attendee-name">{{ attendee.name }}</a>
+                                    </li>
+                                {% endfor %}
+                                </ul>
+                            {% else %}
+                                 <small class="text-muted d-block ps-3 mt-1">No registered attendees.</small>
+                            {% endif %}
+                        </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p class="text-muted">No events found.</p>
+                {% endif %}
+            </div> {# End side-panel-content #}
+        </div> {# End side-panel #}
+    </div> {# End column #}
+
+</div> {# End of the main <div class="row"> #}
+{% endblock %}

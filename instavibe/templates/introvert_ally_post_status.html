@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title or "Posting Status" }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>{{ title }}</h2>
+    <hr>
+
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <h4>Agent's Posting Process</h4>
+            <div class="card">
+                <div class="card-header">
+                    Live Log
+                </div>
+                <div id="agentPostingStream" class="card-body" style="max-height: 400px; overflow-y: auto; font-size: 0.85em;">
+                    <ul class="list-unstyled">
+                        <!-- Thoughts will be populated by JS -->
+                    </ul>
+                    <p id="postingPlaceholder">Initializing agent to post your event and invite...</p>
+                </div>
+                <div class="card-footer" id="statusFooter" style="display: none;">
+                    <p id="finalStatusMessage">Processing complete.</p>
+                    <a href="{{ url_for('home') }}" class="btn btn-primary">Go to Homepage</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const postingStreamUl = document.querySelector('#agentPostingStream ul');
+    const postingPlaceholder = document.getElementById('postingPlaceholder');
+    const statusFooter = document.getElementById('statusFooter');
+    const finalStatusMessage = document.getElementById('finalStatusMessage');
+
+    const eventSource = new EventSource("{{ url_for('ally.stream_post_status') }}");
+    console.log("SSE (Post Status): EventSource created for URL: {{ url_for('ally.stream_post_status') }}");
+
+    eventSource.onopen = function() {
+        console.log("SSE (Post Status): Connection opened.");
+        if(postingPlaceholder) postingPlaceholder.textContent = "Agent connection established. Waiting for posting updates...";
+    };
+
+    eventSource.addEventListener('thought', function(event) {
+        console.log("SSE (Post Status): 'thought' event received, data:", event.data);
+        if(postingPlaceholder && postingPlaceholder.style.display !== 'none') {
+            postingPlaceholder.style.display = 'none';
+        }
+        const thoughtData = JSON.parse(event.data);
+        const li = document.createElement('li');
+        li.innerHTML = `<small class="text-muted">&raquo; ${escapeHtml(thoughtData)}</small>`;
+        postingStreamUl.appendChild(li);
+        const thoughtsContainer = document.getElementById('agentPostingStream');
+        thoughtsContainer.scrollTop = thoughtsContainer.scrollHeight;
+    });
+
+    eventSource.addEventListener('posting_finished', function(event) {
+        console.log("SSE (Post Status): 'posting_finished' event received.", event.data);
+        const data = JSON.parse(event.data);
+        if (finalStatusMessage) finalStatusMessage.textContent = data.message || "Agent has finished the posting process.";
+        if (statusFooter) statusFooter.style.display = 'block';
+        // The stream_end event will handle the final redirect after flash message is set by server
+    });
+
+    eventSource.addEventListener('error', function(event) {
+        console.error("SSE (Post Status): 'error' event received:", event);
+        if(postingPlaceholder) postingPlaceholder.innerHTML = `<span class="text-danger">An error occurred during posting. Please check server logs.</span>`;
+        if (statusFooter) statusFooter.style.display = 'block';
+        if (finalStatusMessage) finalStatusMessage.textContent = "An error occurred. You will be redirected shortly.";
+    });
+
+    eventSource.addEventListener('stream_end', function(event) {
+        console.log("SSE (Post Status): 'stream_end' event received. Redirecting to home.");
+        eventSource.close();
+        if (finalStatusMessage && finalStatusMessage.textContent === "Processing complete.") { // If not already set by posting_finished
+            finalStatusMessage.textContent = "All operations complete. Redirecting to homepage...";
+        }
+        if (statusFooter) statusFooter.style.display = 'block';
+        setTimeout(() => { window.location.href = "{{ url_for('home') }}"; }, 3000); // Redirect after 3 seconds
+    });
+
+    function escapeHtml(unsafe) {
+        if (typeof unsafe !== 'string') {
+            if (unsafe === null || typeof unsafe === 'undefined') return '';
+            unsafe = String(unsafe);
+        }
+        return unsafe.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+    }
+});
+</script>
+{% endblock %}

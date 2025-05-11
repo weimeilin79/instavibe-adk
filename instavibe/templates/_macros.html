@@ -1,0 +1,23 @@
+{# templates/_macros.html #}
+
+{% macro render_post(post, show_author=True) %}
+<div class="card post-card">
+    {% if show_author and post.author_name %}
+    <div class="card-header">
+        <a href="{{ url_for('person_profile', person_id=post.author_id) }}" class="profile-link card-title">{{ post.author_name }}</a>
+    </div>
+    {% endif %}
+    <div class="card-body">
+        {% if not show_author %}
+             <h6 class="card-subtitle mb-2 text-muted">{{ post.post_timestamp | humanize_datetime }}</h6>
+        {% endif %}
+        <p class="card-text">{{ post.text }}</p>
+    </div>
+    {# --- Updated Action Placeholders --- #}
+    <div class="post-actions">
+        <span>❤️ Like</span>    {# Kept #}
+        <span>💬 Comment</span> {# Kept #}
+    </div>
+     {# --- End Action Placeholders --- #}
+</div>
+{% endmacro %}

@@ -16,8 +16,8 @@ else:
 print("-" * 20) # Added a separator for clarity
 
 
-agent_engine = agent_engines.get('projects/789872749985/locations/us-central1/reasoningEngines/6601793268608925696')
-agent_engines.delete('projects/789872749985/locations/us-central1/reasoningEngines/6601793268608925696')
-
+agent_engine = agent_engines.get('projects/789872749985/locations/us-central1/reasoningEngines/8928746901075918848')
+agent_engine.delete(force=True)
+#agent_engines.delete('projects/789872749985/locations/us-central1/reasoningEngines/8928746901075918848')
 
 

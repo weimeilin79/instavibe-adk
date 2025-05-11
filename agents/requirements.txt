@@ -1,7 +1,9 @@
 google-cloud-aiplatform[adk,agent_engines]>=1.90.0
 Flask
+mcp[cli]
 google-adk
 python-dateutil
 humanize
 nest_asyncio
-./a2a_common-0.1.0.whl
+asyncclick
+a2a_common-0.1.0-py3-none-any.whl

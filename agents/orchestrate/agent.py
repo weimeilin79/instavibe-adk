@@ -21,6 +21,7 @@ log = logging.getLogger(__name__)
 # It's better to get this from environment variables or a config file
 # Defaulting to empty list if not set. Adjust as needed.
 REMOTE_AGENT_ADDRESSES_STR = os.getenv("REMOTE_AGENT_ADDRESSES", "")
+log.info(f"Remote Agent Addresses String: {REMOTE_AGENT_ADDRESSES_STR}")
 REMOTE_AGENT_ADDRESSES = [addr.strip() for addr in REMOTE_AGENT_ADDRESSES_STR.split(',') if addr.strip()]
 log.info(f"Remote Agent Addresses: {REMOTE_AGENT_ADDRESSES}")
 
