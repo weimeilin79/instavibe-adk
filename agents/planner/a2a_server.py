@@ -1,11 +1,15 @@
-from common.server import A2AServer
-from common.types import AgentCard, AgentCapabilities, AgentSkill
-from common.task_manager import AgentTaskManager
-from planner.planner_agent import PlannerAgent
-
+from a2a.server.apps import A2AStarletteApplication
+from a2a.types import AgentCard, AgentCapabilities, AgentSkill
+from a2a.server.tasks import InMemoryTaskStore
+from a2a.server.request_handlers import DefaultRequestHandler
 import os
 import logging
 from dotenv import load_dotenv
+from planner.agent_executor import (
+    PlannerAgentExecutor,  
+    PlannerAgent,
+)
+import uvicorn
 
 load_dotenv()
 
@@ -16,15 +20,15 @@ host=os.environ.get("A2A_HOST", "localhost")
 port=int(os.environ.get("A2A_PORT",10003))
 PUBLIC_URL=os.environ.get("PUBLIC_URL")
 
-def main():
+if __name__ == '__main__':
     try:
         capabilities = AgentCapabilities(streaming=True)
         skill = AgentSkill(
             id="night_out_planner",
             name="Night out planner",
             description="""
-            This agent generates multiple fun plan suggestions tailored to your specified location, dates, and interests, 
-            all designed for a moderate budget. It delivers detailed itineraries, 
+            This agent generates multiple fun plan suggestions tailored to your specified location, dates, and interests,
+            all designed for a moderate budget. It delivers detailed itineraries,
             including precise venue information (name, latitude, longitude, and description), in a structured JSON format.
             """,
             tags=["instavibe"],
@@ -33,8 +37,8 @@ def main():
         agent_card = AgentCard(
             name="NightOut Planner Agent",
             description="""
-            This agent generates multiple fun plan suggestions tailored to your specified location, dates, and interests, 
-            all designed for a moderate budget. It delivers detailed itineraries, 
+            This agent generates multiple fun plan suggestions tailored to your specified location, dates, and interests,
+            all designed for a moderate budget. It delivers detailed itineraries,
             including precise venue information (name, latitude, longitude, and description), in a structured JSON format.
             """,
             url=f"{PUBLIC_URL}",
@@ -44,19 +48,21 @@ def main():
             capabilities=capabilities,
             skills=[skill],
         )
-        server = A2AServer(
+
+        request_handler = DefaultRequestHandler(
+            agent_executor=PlannerAgentExecutor(),
+            task_store=InMemoryTaskStore(),
+        )
+
+        server = A2AStarletteApplication(
             agent_card=agent_card,
-            task_manager=AgentTaskManager(agent=PlannerAgent()),
-            host=host,
-            port=port,
+            http_handler=request_handler,
         )
         logger.info(f"Attempting to start server with Agent Card: {agent_card.name}")
         logger.info(f"Server object created: {server}")
-        
-        server.start()
+
+        uvicorn.run(server.build(), host='0.0.0.0', port=port)
     except Exception as e:
         logger.error(f"An error occurred during server startup: {e}")
         exit(1)
-    
-if __name__ == "__main__":
-    main()
+
