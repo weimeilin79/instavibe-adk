@@ -1,11 +1,15 @@
-from common.server import A2AServer
-from common.types import AgentCard, AgentCapabilities, AgentSkill
-from common.task_manager import AgentTaskManager
-from platform_mcp_client.platform_agent import PlatformAgent
-
+from a2a.server.apps import A2AStarletteApplication
+from a2a.types import AgentCard, AgentCapabilities, AgentSkill
+from a2a.server.tasks import InMemoryTaskStore
+from a2a.server.request_handlers import DefaultRequestHandler
 import os
 import logging
 from dotenv import load_dotenv
+from platform_mcp_client.agent_executor import (
+    PlatformAgentExecutor,  
+    PlatformAgent,
+)
+import uvicorn
 
 load_dotenv()
 
@@ -16,25 +20,25 @@ host=os.environ.get("A2A_HOST", "localhost")
 port=int(os.environ.get("A2A_PORT",10002))
 PUBLIC_URL=os.environ.get("PUBLIC_URL")
 
-def main():
+if __name__ == '__main__':
     try:
         capabilities = AgentCapabilities(streaming=True)
         skill = AgentSkill(
             id="instavibe_posting",
             name="Post social post and events on instavibe",
             description="""
-            This "Instavibe" agent helps you create posts (identifying author, text, and sentiment – inferred if unspecified) and register 
-            for events (gathering name, date, attendee). It efficiently collects required information and utilizes dedicated tools 
+            This "Instavibe" agent helps you create posts (identifying author, text, and sentiment – inferred if unspecified) and register
+            for events (gathering name, date, attendee). It efficiently collects required information and utilizes dedicated tools
             to perform these actions on your behalf, ensuring a smooth sharing experience.
             """,
             tags=["instavibe"],
-            examples=["Create an post for me, the post is about my cute cat and make it positive, and I'm Alice"],
+            examples=["Create a post for me, the post is about my cute cat and make it positive, and I'm Alice"],
         )
         agent_card = AgentCard(
             name="Instavibe Posting Agent",
             description="""
-            This "Instavibe" agent helps you create posts (identifying author, text, and sentiment – inferred if unspecified) and register 
-            for events (gathering name, date, attendee). It efficiently collects required information and utilizes dedicated tools 
+            This "Instavibe" agent helps you create posts (identifying author, text, and sentiment – inferred if unspecified) and register
+            for events (gathering name, date, attendee). It efficiently collects required information and utilizes dedicated tools
             to perform these actions on your behalf, ensuring a smooth sharing experience.
             """,
             url=f"{PUBLIC_URL}",
@@ -44,16 +48,17 @@ def main():
             capabilities=capabilities,
             skills=[skill],
         )
-        server = A2AServer(
-            agent_card=agent_card,
-            task_manager=AgentTaskManager(agent=PlatformAgent()),
-            host=host,
-            port=port,
+        request_handler = DefaultRequestHandler(
+            agent_executor=PlatformAgentExecutor(),
+            task_store=InMemoryTaskStore(),
         )
-        server.start()
+
+        server = A2AStarletteApplication(
+            agent_card=agent_card,
+            http_handler=request_handler,
+        )
+
+        uvicorn.run(server.build(), host='0.0.0.0', port=port)
     except Exception as e:
         logger.error(f"An error occurred during server startup: {e}")
         exit(1)
-    
-if __name__ == "__main__":
-    main()
