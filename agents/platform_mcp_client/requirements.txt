@@ -1,8 +1,9 @@
-google-cloud-aiplatform[adk,agent_engines]>=1.90.0
-Flask
-mcp[cli]
-google-adk
-python-dateutil
-humanize
-nest_asyncio
-asyncclick
+google-cloud-aiplatform[adk,agent_engines]==1.95.1
+Flask==3.1.0
+mcp[cli]==1.8.0
+google-adk==1.2.1
+python-dateutil==2.9.0.post0
+humanize==4.12.3
+nest_asyncio==1.6.0
+asyncclick==8.1.8.0
+a2a-sdk==0.2.7
