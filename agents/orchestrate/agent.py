@@ -8,7 +8,7 @@ from google.adk.tools.mcp_tool.mcp_toolset import MCPToolset, SseServerParams
 import logging 
 import nest_asyncio # Import nest_asyncio
 import atexit
-
+from google.adk import Agent
 
 load_dotenv()
 logging.basicConfig(level=logging.INFO)
@@ -28,8 +28,12 @@ log.info(f"Remote Agent Addresses: {REMOTE_AGENT_ADDRESSES}")
 # --- Agent Initialization ---
 # Instantiate the HostAgent logic class
 # You might want to add a task_callback here if needed, similar to run_orchestrator.py
-host_agent_logic = HostAgent(remote_agent_addresses=REMOTE_AGENT_ADDRESSES)
 
-# Create the actual ADK Agent instance
-root_agent: BaseAgent = host_agent_logic.create_agent()
-log.info(f"Orchestrator root agent '{root_agent.name}' created.")
+
+async def get_initialized_orchestrate_agent() -> Agent:
+    """Asynchronously creates and initializes the OrchestrateAgent."""
+    host_agent_logic = await HostAgent.create(REMOTE_AGENT_ADDRESSES)
+    return host_agent_logic.create_agent()
+
+
+root_agent = get_initialized_orchestrate_agent()
