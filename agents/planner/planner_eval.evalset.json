@@ -1,0 +1,194 @@
+{
+  "eval_set_id": "planner_eval1",
+  "name": "planner_eval1",
+  "description": null,
+  "eval_cases": [
+    {
+      "eval_id": "boston",
+      "conversation": [
+        {
+          "invocation_id": "e-664b7264-9f1d-41ad-ac15-3d40ed6f22a5",
+          "user_content": {
+            "parts": [
+              {
+                "video_metadata": null,
+                "thought": null,
+                "inline_data": null,
+                "file_data": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "function_call": null,
+                "function_response": null,
+                "text": "Plan something for me in Boston on the weekend of May 19th 2025, and something on nightlife and shows"
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [
+              {
+                "video_metadata": null,
+                "thought": null,
+                "inline_data": null,
+                "file_data": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "function_call": null,
+                "function_response": null,
+                "text": "Okay, I can help with that! Here are three dating plan suggestions for the weekend of May 19th, 2025, in Boston, focusing on nightlife and shows, and designed to be fun and moderately priced:\n\n"
+              },
+              {
+                "video_metadata": null,
+                "thought": null,
+                "inline_data": null,
+                "file_data": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "function_call": null,
+                "function_response": null,
+                "text": "Okay, here are three date plans for the weekend of May 19th, 2025 in Boston, focusing on nightlife and shows while keeping a moderate budget in mind:\n\n**Plan 1: Comedy & Craft Brews**\n\n*   **Afternoon (5:00 PM):** Start the evening with some laughs at **Laugh Boston** (425 Summer St, Boston, MA 02210, USA; Latitude: 42.3526, Longitude: -71.0457). This comedy club hosts a variety of stand-up acts. Check their schedule for May 19th, 2025, and book tickets in advance.\n*   **Evening (7:00 PM):** Head over to the **Dorchester Brewing Company** (1250 Massachusetts Ave, Boston, MA 02125, USA; Latitude: 42.3309, Longitude: -71.0779) to enjoy a beer at their rooftop bar and greenhouse. Have some pizza, enjoy the brewery atmosphere, and spend some time outdoors on their rooftop terrace.\n*   **Night (9:00 PM):** Continue the evening at a speakeasy such as **Carrie Nation Cocktail Bar** (11 William St, Boston, MA 02110, USA; Latitude: 42.3541, Longitude: -71.0591).\n\n**Plan 2: Rooftop Views & Live Music**\n\n*   **Afternoon (6:00 PM):** Begin the evening at **Deck 12 at YOTEL Boston** (65 Seaport Blvd 12th Floor, Boston, MA 02210, USA; Latitude: 42.3504, Longitude: -71.0448) for rooftop cocktails with panoramic views of the Boston waterfront.\n*   **Evening (8:00 PM):** Head to the **Brighton Music Hall** (158 Brighton Ave, Boston, MA 02134, USA; Latitude: 42.3516, Longitude: -71.1314) for a live music performance. On May 19, 2025, the band Squid will be performing there.\n*   **Late Night (10:00 PM):** Cap off the night with some bar games at **Versus Arcade Bar** (89 Canal St, Boston, MA 02114, USA; Latitude: 42.3643, Longitude: -71.0603), where you can enjoy drinks while playing arcade games.\n\n**Plan 3: Historic Tavern & Theater District Show**\n\n*   **Evening (6:00 PM):** Immerse yourselves in history with drinks at the **Green Dragon Tavern** (11 Marshall St, Boston, MA 02108, USA; Latitude: 42.3604, Longitude: -71.0577), one of Boston's oldest and most historic pubs. Enjoy the atmosphere and grab a bite to eat.\n*   **Night (8:00 PM):** Catch a show in the **Theater District**. Check listings for the **Wilbur Theatre** (246 Tremont St, Boston, MA 02116, USA; Latitude: 42.3518, Longitude: -71.0644).\n*   **Late Night (10:30 PM):** After the show, enjoy a nightcap at a bar near the Theater District.\n\nI hope these suggestions give you a great starting point for planning a fun and memorable weekend in Boston!\n"
+              }
+            ],
+            "role": null
+          },
+          "intermediate_data": {
+            "tool_uses": [],
+            "intermediate_responses": []
+          },
+          "creation_timestamp": 1749088305.204053
+        }
+      ],
+      "session_input": {
+        "app_name": "planner",
+        "user_id": "user",
+        "state": {}
+      },
+      "creation_timestamp": 1749088359.2324417
+    },
+    {
+      "eval_id": "sanfran",
+      "conversation": [
+        {
+          "invocation_id": "e-cc14daa1-0893-450d-a41b-8c0de6e2493f",
+          "user_content": {
+            "parts": [
+              {
+                "video_metadata": null,
+                "thought": null,
+                "inline_data": null,
+                "file_data": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "function_call": null,
+                "function_response": null,
+                "text": "Plan something for me in San Francisco on the weekend of May 26th 2025, and something on coffee and art"
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [
+              {
+                "video_metadata": null,
+                "thought": null,
+                "inline_data": null,
+                "file_data": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "function_call": null,
+                "function_response": null,
+                "text": "Okay, I will generate 3 creative dating plan suggestions for the weekend of May 26th, 2025, in San Francisco, with a focus on coffee and art.\n\n"
+              },
+              {
+                "video_metadata": null,
+                "thought": null,
+                "inline_data": null,
+                "file_data": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "function_call": null,
+                "function_response": null,
+                "text": "Here are 3 dating plan suggestions for the weekend of May 26th, 2025, in San Francisco, combining coffee and art:\n\n**Plan 1: Coffee Art Immersion in the Mission District**\n\n*   **Morning (10:00 AM):** Start your day at Grand Coffee ([37.7571, -122.4185]), a local favorite in the Mission known for its excellent coffee and vibrant atmosphere. Enjoy a specialty latte and pastry while admiring the street art in the neighborhood.\n*   **Mid-day (11:30 AM):** Take a stroll through the Mission District, known for its colorful murals. Focus on the area around Balmy Alley ([37.7527, -122.4209]), a concentrated collection of community murals with social and political themes.\n*   **Lunch (1:00 PM):** Have lunch at a restaurant in the Mission District offering Latin American cuisine ([example restaurants listed in source 16]).\n\n*   **Afternoon (2:30 PM):** Visit Juan R Fuentes Gallery / Accion Latina ([Lat/Lon not found, check in advance]), a community-based art space showcasing local Latino artists and cultural events. Check for any exhibitions or workshops happening that weekend.\n*   **Evening (6:00 PM):** Enjoy dinner at a restaurant that has art ([check in advance]).\n\n**Plan 2: Fort Mason Art Walk and Coffee Break**\n\n*   **Afternoon (2:00 PM):** Start your afternoon with coffee at Equator Coffees Cafe in Fort Mason Center ([37.8074, -122.4164]).\n*   **Late Afternoon/Evening (5:00 PM - 8:00 PM):** Head to the Fort Mason Center for Arts & Culture Art Walk. According to search results, the Art Walk is scheduled for May 22, 2025 ([37.8074, -122.4164]). Check the official Fort Mason Center website for updated information regarding the Art Walk. The Art Walk features pop-up artist talks, exhibitions, opening receptions, printing workshops, tours, and an art workshop.\n*   **Dinner (8:30 PM):** Conclude your date with dinner at Radhaus Alpine Beerhall & Restaurant ([37.8074, -122.4164]) in Fort Mason, offering German-inspired cuisine.\n\n**Plan 3: Hayes Valley Art & Garden Walk and Café**\n\n*   **Afternoon (2:00 PM):** Begin your date with a visit to Hayes Valley Art Works (HVAW) Gallery ([37.7742, -122.4233]) for the Hayes Valley Art & Garden Walk. This event connects the local community with artists, gardens, and musicians in a relaxed setting. Check the HVAW website for specific details on the day's activities.\n*   **Late Afternoon (4:00 PM):** Enjoy the Art & Garden walk to visit various artists.\n*   **Dinner (7:00 PM):** Have dinner at a restaurant nearby HVAW Gallery.\n"
+              }
+            ],
+            "role": null
+          },
+          "intermediate_data": {
+            "tool_uses": [],
+            "intermediate_responses": []
+          },
+          "creation_timestamp": 1749088387.69736
+        }
+      ],
+      "session_input": {
+        "app_name": "planner",
+        "user_id": "user",
+        "state": {}
+      },
+      "creation_timestamp": 1749088454.4510818
+    },
+    {
+      "eval_id": "nyc",
+      "conversation": [
+        {
+          "invocation_id": "e-77af75a0-5a55-4de7-bfe8-a4d9c56ae4ff",
+          "user_content": {
+            "parts": [
+              {
+                "video_metadata": null,
+                "thought": null,
+                "inline_data": null,
+                "file_data": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "function_call": null,
+                "function_response": null,
+                "text": "Plan something for me in New York City on the weekend of May 26th 2025, and something on outdoor and food\n"
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [
+              {
+                "video_metadata": null,
+                "thought": null,
+                "inline_data": null,
+                "file_data": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "function_call": null,
+                "function_response": null,
+                "text": "Okay, I will create three dating plans for the weekend of May 26th, 2025 (May 26th to May 27th), in New York City, focusing on outdoor activities and food.\n\n"
+              },
+              {
+                "video_metadata": null,
+                "thought": null,
+                "inline_data": null,
+                "file_data": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "function_call": null,
+                "function_response": null,
+                "text": "Here are three dating plan suggestions for your weekend in New York City, focusing on outdoor activities and food:\n\n**Plan 1: Greenmarket Stroll & Picnic in Central Park**\n\n*   **Description:** Start your Sunday morning with a visit to the **79th Street Greenmarket** (40.7816, -73.9731). This bustling market, running along Columbus Avenue from 77th to 81st Streets, offers a wide array of local produce, cheeses, baked goods, and more. Sample artisanal foods and pick up ingredients for a delightful picnic. Afterwards, head into **Central Park** (40.7829, -73.9654), find a scenic spot near the Bethesda Terrace or the Sheep Meadow, and enjoy your curated picnic amidst the vibrant atmosphere of the park. You can extend your afternoon by renting a rowboat at The Loeb Boathouse.\n*   **Why it's great:** This plan combines the fun of exploring a local market with the relaxation of a picnic in one of the world's most famous parks. It's a classic, romantic, and relatively inexpensive date.\n\n**Plan 2: Smorgasburg & Brooklyn Bridge Park**\n\n*   **Description:** Spend Saturday indulging in diverse culinary offerings at **Smorgasburg Williamsburg** (40.7178, -73.9641), a large outdoor food market with over 70 vendors. Enjoy unique street food with options like Ethiopian stews, Hawaiian comforts, and explosive pani puri. After satisfying your taste buds, take a leisurely stroll through **Brooklyn Bridge Park** (40.7025, -73.9933), which offers stunning views of the Manhattan skyline. End the evening with drinks at a bar in DUMBO, such as Time Out Market, to continue enjoying the skyline views.\n*   **Why it's great:** This plan combines the excitement of a food festival with the beauty of a waterfront park. It's perfect for foodies and those who appreciate scenic views.\n\n**Plan 3: Fleet Week Ship Tours & Pier Dining**\n\n*   **Description:** Take advantage of Fleet Week and tour naval ships docked at Manhattan's Pier 88 (approx. 40.7650, -74.0025) or Staten Island's Homeport Pier (approx. 40.6333, -74.0667). Enjoy learning about the vessels and meeting active-duty service members (be sure to check for tour times and security requirements). Afterward, head to **Riverpark** (40.7389, -73.9754) in Kips Bay for a seafood-forward New American cuisine with outdoor seating and panoramic views of the East River. The Terrace Bar at Riverpark is a seasonal outdoor space where you can have drinks and lite bites.\n*   **Why it's great:** This plan combines a unique cultural experience with a fine dining experience. Fleet Week offers a chance to see something different, and Riverpark provides a beautiful setting for a romantic dinner.\n"
+              }
+            ],
+            "role": null
+          },
+          "intermediate_data": {
+            "tool_uses": [],
+            "intermediate_responses": []
+          },
+          "creation_timestamp": 1749088489.149146
+        }
+      ],
+      "session_input": {
+        "app_name": "planner",
+        "user_id": "user",
+        "state": {}
+      },
+      "creation_timestamp": 1749088501.3390052
+    }
+  ],
+  "creation_timestamp": 1749088353.8242972
+}
