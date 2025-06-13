@@ -32,7 +32,6 @@ class SocialAgent:
 
   def __init__(self):
     self._agent = self._build_agent()
-    self._user_id = "remote_agent"
     self.runner = Runner(
         app_name=self._agent.name,
         agent=self._agent,
