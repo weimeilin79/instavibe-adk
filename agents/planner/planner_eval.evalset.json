@@ -1,6 +1,6 @@
 {
-  "eval_set_id": "planner_eval1",
-  "name": "planner_eval1",
+  "eval_set_id": "planner_eval",
+  "name": "planner_eval",
   "description": null,
   "eval_cases": [
     {

@@ -1,43 +1,108 @@
-from google.adk.agents import Agent
-from google.adk.tools import google_search
+import asyncio
+from contextlib import AsyncExitStack
+from dotenv import load_dotenv
+from google.adk.agents.llm_agent import LlmAgent
+from google.adk.tools.mcp_tool.mcp_toolset import MCPToolset, SseServerParams
+import logging 
+import os
+import nest_asyncio 
 
-root_agent = Agent(
-    name="location_search_agent",
-    model="gemini-2.0-flash",
-    description="Agent tasked with generating creative and fun dating plan suggestions",
-    instruction="""
 
-        You are a specialized AI assistant tasked with generating creative and fun plan suggestions.
+# Load environment variables from .env file in the parent directory
+# Place this near the top, before using env vars like API keys
+load_dotenv()
+MCP_SERVER_URL=os.environ.get("MCP_SERVER_URL", "http://0.0.0.0:8080/sse")
 
-        **Request:**
-        For the upcoming weekend, specifically from **[START_DATE_YYYY-MM-DD]** to **[END_DATE_YYYY-MM-DD]**, in the location specified as **[TARGET_LOCATION_NAME_OR_CITY_STATE]** (if latitude/longitude are provided, use these: Lat: **[TARGET_LATITUDE]**, Lon: **[TARGET_LONGITUDE]**), please generate **[NUMBER_OF_PLANS_TO_GENERATE, e.g., 3]** distinct dating plan suggestions.
+logging.basicConfig(level=logging.INFO)
+log = logging.getLogger(__name__)
+ 
+# --- Global variables ---
+# Define them first, initialize as None
+root_agent: LlmAgent | None = None
+exit_stack: AsyncExitStack | None = None
 
-        **Constraints and Guidelines for Suggestions:**
-        1.  **Creativity & Fun:** Plans should be engaging, memorable, and offer a good experience for a date.
-        2.  **Budget:** All generated plans should aim for a moderate budget (conceptually "$$"), meaning they should be affordable yet offer good value, without being overly cheap or extravagant. This budget level should be *reflected in the choice of activities and venues*, but **do not** explicitly state "Budget: $$" in the `plan_description`.
-        3.  **Interest Alignment:**
-            *   Consider the following user interests: **[COMMA_SEPARATED_LIST_OF_INTERESTS, e.g., outdoors, arts & culture, foodie, nightlife, unique local events, live music, active/sports]**. Tailor suggestions specifically to these where possible. The plan should *embody* these interests.
-            *   **Fallback:** If specific events or venues perfectly matching all listed user interests cannot be found for the specified weekend, you should create a creative and fun generic dating plan that is still appealing, suitable for the location, and adheres to the moderate budget. This plan should still sound exciting and fun, even if it's more general.
-        4.  **Current & Specific:** Prioritize finding specific, current events, festivals, pop-ups, or unique local venues operating or happening during the specified weekend dates. If exact current events cannot be found, suggest appealing evergreen options or implement the fallback generic plan.
-        5.  **Location Details:** For each place or event mentioned within a plan, you MUST provide its name, precise latitude, precise longitude, and a brief, helpful description.
 
-        **Output Format:**
-        Return your response *exclusively* as a single JSON object. This object should contain a top-level key, "fun_plans", which holds a plan objects. Each plan object in the list must strictly adhere to the following structure:
+async def get_tools_async():
+  print("Attempting to connect to MCP Filesystem server...")
+  tools =  MCPToolset(
+      connection_params=SseServerParams(url=MCP_SERVER_URL, headers={})
+  )
+  log.info("MCP Toolset created successfully.")
 
-        --json--
-        {
-          "plan_description": "A summary of the overall plan, consisting of **exactly three sentences**. Craft these sentences in a friendly, enthusiastic, and conversational tone, as if you're suggesting this awesome idea to a close friend. Make it sound exciting and personal, highlighting the positive aspects and appeal of the plan without explicitly mentioning budget or listing interest categories.",
-          "locations_and_activities": [
-              {
-              "name": "Name of the specific place or event",
-              "latitude": 0.000000,  // Replace with actual latitude
-              "longitude": 0.000000, // Replace with actual longitude
-              "description": "A brief description of this place/event, why it's suitable for the date, and any specific details for the weekend (e.g., opening hours, event time)."
-              }
-              // Add more location/activity objects here if the plan involves multiple stops/parts
-          ]
-        }
+  return tools
+ 
 
-    """,
-    tools=[google_search]
-)
+async def get_agent_async():
+  """
+  Asynchronously creates the MCP Toolset and the LlmAgent.
+
+  Returns:
+      tuple: (LlmAgent instance, AsyncExitStack instance for cleanup)
+  """
+  tools = await get_tools_async()
+
+  root_agent = LlmAgent(
+      model='gemini-2.0-flash', # Adjust model name if needed based on availability
+      name='social_agent',
+      instruction="""
+        You are a friendly and efficient assistant for the Instavibe social app.
+        Your primary goal is to help users create posts and register for events using the available tools.
+
+        When a user asks to create a post:
+        1.  You MUST identify the **author's name** and the **post text**.
+        2.  You MUST determine the **sentiment** of the post.
+            - If the user explicitly states a sentiment (e.g., "make it positive", "this is a sad post", "keep it neutral"), use that sentiment. Valid sentiments are 'positive', 'negative', or 'neutral'.
+            - **If the user does NOT provide a sentiment, you MUST analyze the post text yourself, infer the most appropriate sentiment ('positive', 'negative', or 'neutral'), and use this inferred sentiment directly for the tool call. Do NOT ask the user to confirm your inferred sentiment. Simply state the sentiment you've chosen as part of a summary if you confirm the overall action.**
+        3.  Once you have the `author_name`, `text`, and `sentiment` (either provided or inferred), you will prepare to call the `create_post` tool with these three arguments.
+
+        When a user asks to create an event or register for one:
+        1.  You MUST identify the **event name**, the **event date**, and the **attendee's name**.
+        2.  For the `event_date`, aim to get it in a structured format if possible (e.g., "YYYY-MM-DDTHH:MM:SSZ" or "tomorrow at 3 PM"). If the user provides a vague date, you can ask for clarification or make a reasonable interpretation. The tool expects a string.
+        3.  Once you have the `event_name`, `event_date`, and `attendee_name`, you will prepare to call the `create_event` tool with these three arguments.
+
+        General Guidelines:
+        - If any required information for an action (like author_name for a post, or event_name for an event) is missing from the user's initial request, politely ask the user for the specific missing pieces of information.
+        - Before executing an action (calling a tool), you can optionally provide a brief summary of what you are about to do (e.g., "Okay, I'll create a post for [author_name] saying '[text]' with a [sentiment] sentiment."). This summary should include the inferred sentiment if applicable, but it should not be phrased as a question seeking validation for the sentiment.
+        - Use only the provided tools. Do not try to perform actions outside of their scope.
+
+      """,
+      tools=[tools],
+  )
+  print("LlmAgent created.")
+
+  # Return both the agent and the exit_stack needed for cleanup
+  return root_agent
+
+
+async def initialize():
+   """Initializes the global root_agent and exit_stack."""
+   global root_agent
+   if root_agent is None:
+       log.info("Initializing agent...")
+       root_agent = await get_agent_async()
+       if root_agent:
+           log.info("Agent initialized successfully.")
+       else:
+           log.error("Agent initialization failed.")
+       
+   else:
+       log.info("Agent already initialized.")
+
+def _cleanup_sync():
+    """Synchronous wrapper to attempt async cleanup."""
+    log.info("MCP connection cleanup is now handled externally.")
+    # No specific cleanup action needed here as exit_stack is managed elsewhere.
+    pass 
+
+
+nest_asyncio.apply()
+
+log.info("Running agent initialization at module level using asyncio.run()...")
+try:
+    asyncio.run(initialize())
+    log.info("Module level asyncio.run(initialize()) completed.")
+except RuntimeError as e:
+    log.error(f"RuntimeError during module level initialization (likely nested loops): {e}", exc_info=True)
+except Exception as e:
+    log.error(f"Unexpected error during module level initialization: {e}", exc_info=True)
+

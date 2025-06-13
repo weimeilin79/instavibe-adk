@@ -19,10 +19,16 @@ from a2a.types import (
     Task,
     TaskState,
 )
-from orchestrate.remote_agent_connection import (
-    RemoteAgentConnections,
-    TaskUpdateCallback,
-)
+try:
+    from remote_agent_connection import ( 
+        RemoteAgentConnections,
+        TaskUpdateCallback,
+    )
+except ImportError:
+    from orchestrate.remote_agent_connection import ( 
+        RemoteAgentConnections,
+        TaskUpdateCallback,
+    )
 from dotenv import load_dotenv
 from google.adk import Agent
 from google.adk.agents.llm_agent import LlmAgent

@@ -5,23 +5,16 @@ FROM python:3.12-slim
 
 # Set the working directory in the container
 WORKDIR /app
+RUN pip install --upgrade pip
 
 # --- Dependency Installation ---
 # Copy only the requirements file first to leverage Docker cache
-COPY ./agents/social/requirements.txt /app/requirements.txt
+COPY ./social/requirements.txt /app/requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
-
-# Install the a2a common package (using pyproject.toml)
-COPY ./a2a /tmp/a2a-src
-WORKDIR /tmp/a2a-src
-RUN pip install --no-cache-dir .
-WORKDIR /app # Switch back to the main app directory
-RUN rm -rf /tmp/a2a-src # Clean up the source directory
 
 
 # --- Application Code ---
-COPY ./agents/social /app/agents/social
-COPY ./agents/social/.env /app/agents/social/.env
+COPY ./social /app/agents/social
 
 # --- Environment ---
 ENV PYTHONPATH=/app/agents 

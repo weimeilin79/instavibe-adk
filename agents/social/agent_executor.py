@@ -1,197 +1,127 @@
+import datetime
+from zoneinfo import ZoneInfo
+from google.adk.agents import LoopAgent, LlmAgent, BaseAgent
+from social.instavibe import get_person_posts,get_person_friends,get_person_id_by_name,get_person_attended_events
+from google.adk.agents.invocation_context import InvocationContext
+from google.adk.events import Event, EventActions
+from typing import AsyncGenerator
 import logging
 
-from typing import TYPE_CHECKING
+from google.genai import types # For types.Content
+from google.adk.agents.callback_context import CallbackContext
+from typing import Optional
 
-from a2a.server.agent_execution import AgentExecutor
-from a2a.server.agent_execution.context import RequestContext
-from a2a.server.events.event_queue import EventQueue
-from a2a.server.tasks import TaskUpdater
-from a2a.types import (
-    AgentCard,
-    FilePart,
-    FileWithBytes,
-    FileWithUri,
-    Part,
-    TaskState,
-    TextPart,
-    UnsupportedOperationError,
+# Get a logger instance
+log = logging.getLogger(__name__)
+
+class CheckCondition(BaseAgent):
+    async def _run_async_impl(self, ctx: InvocationContext) -> AsyncGenerator[Event, None]:
+        #log.info(f"Checking status: {ctx.session.state.get("summary_status", "fail")}")
+        log.info(f"Summary: {ctx.session.state.get("summary")}")
+
+        status = ctx.session.state.get("summary_status", "fail").strip()
+        is_done = (status == "completed")
+
+        yield Event(author=self.name, actions=EventActions(escalate=is_done))
+
+profile_agent = LlmAgent(
+    name="profile_agent",
+    model="gemini-2.0-flash",
+    description=(
+        "Agent to answer questions about the this person's social profile. User will ask person's profile using their name, make sure to fetch the id before getting other data."
+    ),
+    instruction=(
+        "You are a helpful agent who can answer user questions about this person's social profile."
+    ),
+    tools=[get_person_posts,get_person_friends,get_person_id_by_name,get_person_attended_events],
 )
-from a2a.utils.errors import ServerError
-from google.adk import Runner
-from google.genai import types
 
 
-if TYPE_CHECKING:
-    from google.adk.sessions.session import Session
-
-
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
-
-
-# Constants
-DEFAULT_USER_ID = 'self'
-
-class SocialAgentExecutor(AgentExecutor):
-    def __init__(self, runner: Runner, card: AgentCard):
-        self.runner = runner
-        self._card = card
-        # Track active sessions for potential cancellation
-        self._active_sessions: set[str] = set()
-
-    async def _process_request(
-        self,
-        new_message: types.Content,
-        session_id: str,
-        task_updater: TaskUpdater,
-    ) -> None:
-        session_obj = await self._upsert_session(session_id)
-        # Update session_id with the ID from the resolved session object.
-        # (it may be the same as the one passed in if it already exists)
-        session_id = session_obj.id
-
-        # Track this session as active
-        self._active_sessions.add(session_id)
-
-        try:
-            async for event in self.runner.run_async(
-                session_id=session_id,
-                user_id=DEFAULT_USER_ID,
-                new_message=new_message,
-            ):
-                if event.is_final_response():
-                    parts = [
-                        convert_genai_part_to_a2a(part)
-                        for part in event.content.parts
-                        if (part.text or part.file_data or part.inline_data)
-                    ]
-                    logger.debug('Yielding final response: %s', parts)
-                    await task_updater.add_artifact(parts)
-                    await task_updater.update_status(
-                        TaskState.completed, final=True
-                    )
-                    break
-                if not event.get_function_calls():
-                    logger.debug('Yielding update response')
-                    await task_updater.update_status(
-                        TaskState.working,
-                        message=task_updater.new_agent_message(
-                            [
-                                convert_genai_part_to_a2a(part)
-                                for part in event.content.parts
-                                if (
-                                    part.text
-                                )
-                            ],
-                        ),
-                    )
-                else:
-                    logger.debug('Skipping event')
-        finally:
-            # Remove from active sessions when done
-            self._active_sessions.discard(session_id)
-
-    async def execute(
-        self,
-        context: RequestContext,
-        event_queue: EventQueue,
-    ):
-        # Run the agent until either complete or the task is suspended.
-        updater = TaskUpdater(event_queue, context.task_id, context.context_id)
-        # Immediately notify that the task is submitted.
-        if not context.current_task:
-            await updater.update_status(TaskState.submitted)
-        await updater.update_status(TaskState.working)
-        await self._process_request(
-            types.UserContent(
-                parts=[
-                    convert_a2a_part_to_genai(part)
-                    for part in context.message.parts
-                ],
-            ),
-            context.context_id,
-            updater,
-        )
-        logger.debug('[SocialAgentExecutor] execute exiting')
-
-    async def cancel(self, context: RequestContext, event_queue: EventQueue):
-        """Cancel the execution for the given context.
-
-        Currently logs the cancellation attempt as the underlying ADK runner
-        doesn't support direct cancellation of ongoing tasks.
+summary_agent = LlmAgent(
+    name="summary_agent",
+    model="gemini-2.0-flash",
+    description=(
+        "Generate a comprehensive social summary as a single, cohesive paragraph. This summary should cover the activities, posts, friend networks, and event participation of one or more individuals. If multiple profiles are analyzed, the paragraph must also identify and integrate any common ground found between them."
+    ),
+    instruction=(
         """
-        session_id = context.context_id
-        if session_id in self._active_sessions:
-            logger.info(
-                f'Cancellation requested for active weather session: {session_id}'
-            )
-            # TODO: Implement proper cancellation when ADK supports it
-            self._active_sessions.discard(session_id)
-        else:
-            logger.debug(
-                f'Cancellation requested for inactive weather session: {session_id}'
-            )
+        Your primary task is to synthesize social profile information into a single, comprehensive paragraph.
 
-        raise ServerError(error=UnsupportedOperationError())
+            **Input Scope & Default Behavior:**
+            *   If specific individuals are named by the user, focus your analysis on them.
+            *   **If no individuals are specified, or if the request is general, assume the user wants an analysis of *all relevant profiles available in the current dataset/context*.**
 
-    async def _upsert_session(self, session_id: str) -> 'Session':
-        """Retrieves a session if it exists, otherwise creates a new one.
+            **For each profile (whether specified or determined by default), you must analyze:**
 
-        Ensures that async session service methods are properly awaited.
-        """
-        session = await self.runner.session_service.get_session(
-            app_name=self.runner.app_name,
-            user_id=DEFAULT_USER_ID,
-            session_id=session_id,
-        )
-        if session is None:
-            session = await self.runner.session_service.create_session(
-                app_name=self.runner.app_name,
-                user_id=DEFAULT_USER_ID,
-                session_id=session_id,
-            )
-        return session
+            1.  **Post Analysis:**
+                *   Systematically review their posts (e.g., content, topics, frequency, engagement).
+                *   Identify recurring themes, primary interests, and expressed sentiments.
 
+            2.  **Friendship Relationship Analysis:**
+                *   Examine their connections/friends list.
+                *   Identify key relationships, mutual friends (especially if comparing multiple profiles), and the general structure of their social network.
 
-def convert_a2a_part_to_genai(part: Part) -> types.Part:
-    """Convert a single A2A Part type into a Google Gen AI Part type.
+            3.  **Event Participation Analysis:**
+                *   Investigate their past (and if available, upcoming) event participation.
+                *   Note the types of events, frequency of attendance, and any notable roles (e.g., organizer, speaker).
 
-    Args:
-        part: The A2A Part to convert
+            **Output Generation (Single Paragraph):**
 
-    Returns:
-        The equivalent Google Gen AI Part
+            *   **Your entire output must be a single, cohesive summary paragraph.**
+                *   **If analyzing a single profile:** This paragraph will detail their activities, interests, and social connections based on the post, friend, and event analysis.
+                *   **If analyzing multiple profiles:** This paragraph will synthesize the key findings regarding posts, friends, and events for each individual. Crucially, it must then seamlessly integrate or conclude with an identification and description of the common ground found between them (e.g., shared interests from posts, overlapping event attendance, mutual friends). The aim is a unified narrative within this single paragraph.
 
-    Raises:
-        ValueError: If the part type is not supported
-    """
-    part = part.root
-    if isinstance(part, TextPart):
-        return types.Part(text=part.text)
-    raise ValueError(f'Unsupported part type: {type(part)}')
+            **Key Considerations:**
+            *   Base your summary strictly on the available data.
+            *   If data for a specific category (posts, friends, events) is missing or sparse for a profile, you may briefly acknowledge this within the narrative if relevant.
+                """
+        ),
+    output_key="summary"
+)
 
+check_agent = LlmAgent(
+    name="check_agent",
+    model="gemini-2.0-flash",
+    description=(
+        "Check if everyone's social profile are summarized and has been generated. Output 'completed' or 'pending'."
+    ),
+    output_key="summary_status"
+)
 
-def convert_genai_part_to_a2a(part: types.Part) -> Part:
-        """Convert a single Google Gen AI Part type into an A2A Part type.
+def modify_output_after_agent(callback_context: CallbackContext) -> Optional[types.Content]:
 
-        Args:
-            part: The Google Gen AI Part to convert
+    agent_name = callback_context.agent_name
+    invocation_id = callback_context.invocation_id
+    current_state = callback_context.state.to_dict()
+    current_user_content = callback_context.user_content
+    print(f"[Callback] Exiting agent: {agent_name} (Inv: {invocation_id})")
+    print(f"[Callback] Current summary_status: {current_state.get("summary_status")}")
+    print(f"[Callback] Current Content: {current_user_content}")
 
-        Returns:
-            The equivalent A2A Part
+    status = current_state.get("summary_status").strip()
+    is_done = (status == "completed")
+    # Retrieve the final summary from the state
 
-        Raises:
-            ValueError: If the part type is not supported
-        """
-        if part.text:
-            return TextPart(text=part.text)
-        if part.inline_data:
-            return Part(
-                root=FilePart(
-                    file=FileWithBytes(
-                        bytes=part.inline_data.data,
-                        mime_type=part.inline_data.mime_type,
-                    )
-                )
-            )
-        raise ValueError(f'Unsupported part type: {part}')
+    final_summary = current_state.get("summary")
+    print(f"[Callback] final_summary: {final_summary}")
+    if final_summary and is_done and isinstance(final_summary, str):
+        log.info(f"[Callback] Found final summary, constructing output Content.")
+        # Construct the final output Content object to be sent back
+        return types.Content(role="model", parts=[types.Part(text=final_summary.strip())])
+    else:
+        log.warning("[Callback] No final summary found in state or it's not a string.")
+        # Optionally return a default message or None if no summary was generated
+        return None
+
+root_agent = LoopAgent(
+    name="InteractivePipeline",
+    sub_agents=[
+        profile_agent,
+        summary_agent,
+        check_agent,
+        CheckCondition(name="Checker")
+    ],
+    description="Find everyone's social profile on events, post and friends",
+    max_iterations=10,
+    after_agent_callback=modify_output_after_agent
+)

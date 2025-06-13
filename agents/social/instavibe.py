@@ -130,6 +130,36 @@ def run_graph_query( graph_sql, params=None, param_types=None, expected_fields=N
 
     return results_list
 
+def get_person_attended_events(person_id: str)-> list[dict]:
+    """
+    Fetches events attended by a specific person using Graph Query.
+    Args:
+       person_id (str): The ID of the person whose posts to fetch.
+    Returns: list[dict] or None.
+    """
+    if not db_instance: return None
+
+    graph_sql = """
+        Graph SocialGraph
+        MATCH (p:Person)-[att:Attended]->(e:Event)
+        WHERE p.person_id = @person_id
+        RETURN e.event_id, e.name, e.event_date, att.attendance_time
+        ORDER BY e.event_date DESC
+    """
+    params = {"person_id": person_id}
+    param_types_map = {"person_id": param_types.STRING}
+    fields = ["event_id", "name", "event_date", "attendance_time"]
+
+    results = run_graph_query( graph_sql, params=params, param_types=param_types_map, expected_fields=fields)
+
+    if results is None: return None
+
+    for event in results:
+        if isinstance(event.get('event_date'), datetime):
+            event['event_date'] = event['event_date'].isoformat()
+        if isinstance(event.get('attendance_time'), datetime):
+            event['attendance_time'] = event['attendance_time'].isoformat()
+    return results
 
 def get_person_id_by_name( name: str) -> str:
     """
@@ -161,38 +191,6 @@ def get_person_id_by_name( name: str) -> str:
         return results[0].get('person_id') # Return the ID from the first dictionary
     else:
         return None # Name not found
-    
-
-def get_person_attended_events(person_id: str)-> list[dict]:
-    """
-    Fetches events attended by a specific person using Graph Query.
-    Args:
-       person_id (str): The ID of the person whose posts to fetch.
-    Returns: list[dict] or None.
-    """
-    if not db_instance: return None
-
-    graph_sql = """
-        Graph SocialGraph
-        MATCH (p:Person)-[att:Attended]->(e:Event)
-        WHERE p.person_id = @person_id
-        RETURN e.event_id, e.name, e.event_date, att.attendance_time
-        ORDER BY e.event_date DESC
-    """
-    params = {"person_id": person_id}
-    param_types_map = {"person_id": param_types.STRING}
-    fields = ["event_id", "name", "event_date", "attendance_time"]
-
-    results = run_graph_query( graph_sql, params=params, param_types=param_types_map, expected_fields=fields)
-
-    if results is None: return None
-
-    for event in results:
-        if isinstance(event.get('event_date'), datetime):
-            event['event_date'] = event['event_date'].isoformat()
-        if isinstance(event.get('attendance_time'), datetime):
-            event['attendance_time'] = event['attendance_time'].isoformat()
-    return results
 
 
 def get_person_posts( person_id: str)-> list[dict]:
@@ -262,40 +260,3 @@ def get_person_friends( person_id: str)-> list[dict]:
     results = run_graph_query( graph_sql, params=params, param_types=param_types_map, expected_fields=fields)
 
     return results
-
-
-# --- Example Usage (if run directly) ---
-if __name__ == "__notmain__":
-    if db_instance:
-        print("\n--- Testing Graph Data Fetching Functions ---")
-
-        test_name = "Alice"
-        print(f"\n0. Fetching ID for name: {test_name}")
-        test_person_id = get_person_id_by_name( test_name)
-        if test_person_id:
-            print(f"Person ID for '{test_name}': {test_person_id}")
-           
-        print(f"\n1. Fetching events attended by Person ID: {test_person_id}")
-        attended_events = get_person_attended_events( test_person_id)
-        if attended_events is not None:
-            print(json.dumps(attended_events, indent=2))
-        else:
-            print("Failed to fetch attended events.")
-
-        # UPDATED EXAMPLE CALL
-        print(f"\n2. Fetching posts for Person ID: {test_person_id} (limit 10)")
-        person_posts = get_person_posts( person_id=test_person_id, limit=10)
-        if person_posts is not None:
-            print(json.dumps(person_posts, indent=2))
-        else:
-            print("Failed to fetch person's posts.")
-
-        print(f"\n3. Fetching friends for Person ID: {test_person_id}")
-        friends = get_person_friends(test_person_id)
-        if friends is not None:
-            print(json.dumps(friends, indent=2))
-        else:
-            print("Failed to fetch friends.")
-
-    else:
-        print("\nCannot run examples: Spanner database connection not established.")

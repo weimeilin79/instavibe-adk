@@ -1,50 +1,197 @@
-from a2a.server.agent_execution import AgentExecutor, RequestContext
-from a2a.server.events import EventQueue
-from a2a.utils import new_agent_text_message
-from google.adk.agents.llm_agent import LlmAgent
-from . import agent
-from google.adk.runners import Runner
-from google.adk.sessions import InMemorySessionService
-from google.adk.artifacts import InMemoryArtifactService
-from google.adk.memory.in_memory_memory_service import InMemoryMemoryService
+import logging
 
-class PlatformAgent:
-  """An agent that post event and post to instavibe."""
+from typing import TYPE_CHECKING
 
-  SUPPORTED_CONTENT_TYPES = ["text", "text/plain"]
+from a2a.server.agent_execution import AgentExecutor
+from a2a.server.agent_execution.context import RequestContext
+from a2a.server.events.event_queue import EventQueue
+from a2a.server.tasks import TaskUpdater
+from a2a.types import (
+    AgentCard,
+    FilePart,
+    FileWithBytes,
+    FileWithUri,
+    Part,
+    TaskState,
+    TextPart,
+    UnsupportedOperationError,
+)
+from a2a.utils.errors import ServerError
+from google.adk import Runner
+from google.genai import types
 
-  def __init__(self):
-    self._agent = self._build_agent()
-    self._user_id = "platform_agent"
-    self._runner = Runner(
-        app_name=self._agent.name,
-        agent=self._agent,
-        artifact_service=InMemoryArtifactService(),
-        session_service=InMemorySessionService(),
-        memory_service=InMemoryMemoryService(),
-    )
 
-  def get_processing_message(self) -> str:
-      return "Processing the social post and event request..."
+if TYPE_CHECKING:
+    from google.adk.sessions.session import Session
 
-  def _build_agent(self) -> LlmAgent:
-    """Builds the LLM agent for the Processing the social post and event request."""
-    return agent.root_agent
 
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+
+
+# Constants
+DEFAULT_USER_ID = 'self'
 
 class PlatformAgentExecutor(AgentExecutor):
-    def __init__(self):
-        self.agent = PlatformAgent()
+    def __init__(self, runner: Runner, card: AgentCard):
+        self.runner = runner
+        self._card = card
+        # Track active sessions for potential cancellation
+        self._active_sessions: set[str] = set()
+
+    async def _process_request(
+        self,
+        new_message: types.Content,
+        session_id: str,
+        task_updater: TaskUpdater,
+    ) -> None:
+        session_obj = await self._upsert_session(session_id)
+        # Update session_id with the ID from the resolved session object.
+        # (it may be the same as the one passed in if it already exists)
+        session_id = session_obj.id
+
+        # Track this session as active
+        self._active_sessions.add(session_id)
+
+        try:
+            async for event in self.runner.run_async(
+                session_id=session_id,
+                user_id=DEFAULT_USER_ID,
+                new_message=new_message,
+            ):
+                if event.is_final_response():
+                    parts = [
+                        convert_genai_part_to_a2a(part)
+                        for part in event.content.parts
+                        if (part.text or part.file_data or part.inline_data)
+                    ]
+                    logger.debug('Yielding final response: %s', parts)
+                    await task_updater.add_artifact(parts)
+                    await task_updater.update_status(
+                        TaskState.completed, final=True
+                    )
+                    break
+                if not event.get_function_calls():
+                    logger.debug('Yielding update response')
+                    await task_updater.update_status(
+                        TaskState.working,
+                        message=task_updater.new_agent_message(
+                            [
+                                convert_genai_part_to_a2a(part)
+                                for part in event.content.parts
+                                if (
+                                    part.text
+                                )
+                            ],
+                        ),
+                    )
+                else:
+                    logger.debug('Skipping event')
+        finally:
+            # Remove from active sessions when done
+            self._active_sessions.discard(session_id)
 
     async def execute(
         self,
         context: RequestContext,
         event_queue: EventQueue,
-    ) -> None:
-        result = await self.agent.invoke()
-        await event_queue.enqueue_event(new_agent_text_message(result))
-    
-    async def cancel(
-        self, context: RequestContext, event_queue: EventQueue
-    ) -> None:
-        raise Exception('cancel not supported')
+    ):
+        # Run the agent until either complete or the task is suspended.
+        updater = TaskUpdater(event_queue, context.task_id, context.context_id)
+        # Immediately notify that the task is submitted.
+        if not context.current_task:
+            await updater.update_status(TaskState.submitted)
+        await updater.update_status(TaskState.working)
+        await self._process_request(
+            types.UserContent(
+                parts=[
+                    convert_a2a_part_to_genai(part)
+                    for part in context.message.parts
+                ],
+            ),
+            context.context_id,
+            updater,
+        )
+        logger.debug('[PlatformAgentExecutor] execute exiting')
+
+    async def cancel(self, context: RequestContext, event_queue: EventQueue):
+        """Cancel the execution for the given context.
+
+        Currently logs the cancellation attempt as the underlying ADK runner
+        doesn't support direct cancellation of ongoing tasks.
+        """
+        session_id = context.context_id
+        if session_id in self._active_sessions:
+            logger.info(
+                f'Cancellation requested for active weather session: {session_id}'
+            )
+            # TODO: Implement proper cancellation when ADK supports it
+            self._active_sessions.discard(session_id)
+        else:
+            logger.debug(
+                f'Cancellation requested for inactive weather session: {session_id}'
+            )
+
+        raise ServerError(error=UnsupportedOperationError())
+
+    async def _upsert_session(self, session_id: str) -> 'Session':
+        """Retrieves a session if it exists, otherwise creates a new one.
+
+        Ensures that async session service methods are properly awaited.
+        """
+        session = await self.runner.session_service.get_session(
+            app_name=self.runner.app_name,
+            user_id=DEFAULT_USER_ID,
+            session_id=session_id,
+        )
+        if session is None:
+            session = await self.runner.session_service.create_session(
+                app_name=self.runner.app_name,
+                user_id=DEFAULT_USER_ID,
+                session_id=session_id,
+            )
+        return session
+
+
+def convert_a2a_part_to_genai(part: Part) -> types.Part:
+    """Convert a single A2A Part type into a Google Gen AI Part type.
+
+    Args:
+        part: The A2A Part to convert
+
+    Returns:
+        The equivalent Google Gen AI Part
+
+    Raises:
+        ValueError: If the part type is not supported
+    """
+    part = part.root
+    if isinstance(part, TextPart):
+        return types.Part(text=part.text)
+    raise ValueError(f'Unsupported part type: {type(part)}')
+
+
+def convert_genai_part_to_a2a(part: types.Part) -> Part:
+        """Convert a single Google Gen AI Part type into an A2A Part type.
+
+        Args:
+            part: The Google Gen AI Part to convert
+
+        Returns:
+            The equivalent A2A Part
+
+        Raises:
+            ValueError: If the part type is not supported
+        """
+        if part.text:
+            return TextPart(text=part.text)
+        if part.inline_data:
+            return Part(
+                root=FilePart(
+                    file=FileWithBytes(
+                        bytes=part.inline_data.data,
+                        mime_type=part.inline_data.mime_type,
+                    )
+                )
+            )
+        raise ValueError(f'Unsupported part type: {part}')
