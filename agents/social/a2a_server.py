@@ -39,6 +39,32 @@ class SocialAgent:
         session_service=InMemorySessionService(),
         memory_service=InMemoryMemoryService(),
     )
+    capabilities = AgentCapabilities(streaming=True)
+    skill = AgentSkill(
+                id="social_profile_analysis",
+                name="Analyze Instavibe social profile",
+                description="""
+                Using a provided list of names, this agent synthesizes Instavibe social profile information by analyzing posts, friends, and events.
+                It delivers a comprehensive single-paragraph summary for individuals, and for groups, identifies commonalities in their social activities
+                and connections based on profile data.
+                """,
+                tags=["instavibe"],
+                examples=["Can you tell me about Bob and Alice?"],
+    )
+    self.agent_card = AgentCard(
+                name="Social Profile Agent",
+                description="""
+                Using a provided list of names, this agent synthesizes Instavibe social profile information by analyzing posts, friends, and events.
+                It delivers a comprehensive single-paragraph summary for individuals, and for groups, identifies commonalities in their social activities
+                and connections based on profile data.
+                """,
+                url=f"{PUBLIC_URL}",
+                version="1.0.0",
+                defaultInputModes=self.SUPPORTED_CONTENT_TYPES,
+                defaultOutputModes=self.SUPPORTED_CONTENT_TYPES,
+                capabilities=capabilities,
+                skills=[skill],
+    )
 
   def get_processing_message(self) -> str:
       return "Processing the social profile analysis request..."
@@ -49,42 +75,15 @@ class SocialAgent:
 
 if __name__ == '__main__':
     try:
-        capabilities = AgentCapabilities(streaming=True)
-        skill = AgentSkill(
-            id="social_profile_analysis",
-            name="Analyze Instavibe social profile",
-            description="""
-            Using a provided list of names, this agent synthesizes Instavibe social profile information by analyzing posts, friends, and events.
-            It delivers a comprehensive single-paragraph summary for individuals, and for groups, identifies commonalities in their social activities
-            and connections based on profile data.
-            """,
-            tags=["instavibe"],
-            examples=["Can you tell me about Bob and Alice?"],
-        )
-        agent_card = AgentCard(
-            name="Social Profile Agent",
-            description="""
-            Using a provided list of names, this agent synthesizes Instavibe social profile information by analyzing posts, friends, and events.
-            It delivers a comprehensive single-paragraph summary for individuals, and for groups, identifies commonalities in their social activities
-            and connections based on profile data.
-            """,
-            url=f"{PUBLIC_URL}",
-            version="1.0.0",
-            defaultInputModes=SocialAgent.SUPPORTED_CONTENT_TYPES,
-            defaultOutputModes=SocialAgent.SUPPORTED_CONTENT_TYPES,
-            capabilities=capabilities,
-            skills=[skill],
-        )
-
         socialAgent = SocialAgent()
 
         request_handler = DefaultRequestHandler(
-            agent_executor=SocialAgentExecutor(socialAgent.runner,agent_card),
+            agent_executor=SocialAgentExecutor(socialAgent.runner,socialAgent.agent_card),
             task_store=InMemoryTaskStore(),
         )
 
         server = A2AStarletteApplication(
-            agent_card=agent_card,
+            agent_card=socialAgent.agent_card,
             http_handler=request_handler,
         )
 
