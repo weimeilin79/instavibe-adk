@@ -2,14 +2,18 @@ from a2a.server.apps import A2AStarletteApplication
 from a2a.types import AgentCard, AgentCapabilities, AgentSkill
 from a2a.server.tasks import InMemoryTaskStore
 from a2a.server.request_handlers import DefaultRequestHandler
+from google.adk.agents.llm_agent import LlmAgent
+from google.adk.runners import Runner
+from google.adk.sessions import InMemorySessionService
+from google.adk.artifacts import InMemoryArtifactService
+from google.adk.memory.in_memory_memory_service import InMemoryMemoryService
 import os
 import logging
 from dotenv import load_dotenv
-from planner.agent_executor import (
-    PlannerAgentExecutor,  
-    PlannerAgent,
-)
+from planner.agent_executor import PlannerAgentExecutor
 import uvicorn
+from planner import agent
+
 
 load_dotenv()
 
@@ -20,12 +24,34 @@ host=os.environ.get("A2A_HOST", "localhost")
 port=int(os.environ.get("A2A_PORT",10003))
 PUBLIC_URL=os.environ.get("PUBLIC_URL")
 
+class PlannerAgent:
+    """An agent to help user planning a event with its desire location."""
+    SUPPORTED_CONTENT_TYPES = ["text", "text/plain"]
+
+    def __init__(self):
+        self._agent = self._build_agent()
+        self.runner = Runner(
+            app_name=self._agent.name,
+            agent=self._agent,
+            artifact_service=InMemoryArtifactService(),
+            session_service=InMemorySessionService(),
+            memory_service=InMemoryMemoryService(),
+        )
+
+    def get_processing_message(self) -> str:
+        return "Processing the planning request..."
+
+    def _build_agent(self) -> LlmAgent:
+        """Builds the LLM agent for the night out planning agent."""
+        return agent.root_agent
+
+
 if __name__ == '__main__':
     try:
         capabilities = AgentCapabilities(streaming=True)
         skill = AgentSkill(
-            id="night_out_planner",
-            name="Night out planner",
+            id="event_planner",
+            name="Event planner",
             description="""
             This agent generates multiple fun plan suggestions tailored to your specified location, dates, and interests,
             all designed for a moderate budget. It delivers detailed itineraries,
@@ -35,7 +61,7 @@ if __name__ == '__main__':
             examples=["What about Bostona MA this weekend?"],
         )
         agent_card = AgentCard(
-            name="NightOut Planner Agent",
+            name="Event Planner Agent",
             description="""
             This agent generates multiple fun plan suggestions tailored to your specified location, dates, and interests,
             all designed for a moderate budget. It delivers detailed itineraries,
@@ -49,8 +75,10 @@ if __name__ == '__main__':
             skills=[skill],
         )
 
+        plannerAgent = PlannerAgent()
+
         request_handler = DefaultRequestHandler(
-            agent_executor=PlannerAgentExecutor(),
+            agent_executor=PlannerAgentExecutor(plannerAgent.runner,agent_card),
             task_store=InMemoryTaskStore(),
         )
 
