@@ -2,14 +2,19 @@ from a2a.server.apps import A2AStarletteApplication
 from a2a.types import AgentCard, AgentCapabilities, AgentSkill
 from a2a.server.tasks import InMemoryTaskStore
 from a2a.server.request_handlers import DefaultRequestHandler
+from google.adk.agents import LoopAgent
+from google.adk.runners import Runner
+from google.adk.sessions import InMemorySessionService
+from google.adk.artifacts import InMemoryArtifactService
+from google.adk.memory.in_memory_memory_service import InMemoryMemoryService
 import os
 import logging
 from dotenv import load_dotenv
 from social.agent_executor import (
-    SocialAgentExecutor,  
-    SocialAgent,
+    SocialAgentExecutor, 
 )
 import uvicorn
+from social import agent
 
 load_dotenv()
 
@@ -19,6 +24,29 @@ logger = logging.getLogger(__name__)
 host=os.environ.get("A2A_HOST", "localhost")
 port=int(os.environ.get("A2A_PORT",10001))
 PUBLIC_URL=os.environ.get("PUBLIC_URL")
+
+class SocialAgent:
+  """An agent that handles social profile analysis."""
+
+  SUPPORTED_CONTENT_TYPES = ["text", "text/plain"]
+
+  def __init__(self):
+    self._agent = self._build_agent()
+    self._user_id = "remote_agent"
+    self.runner = Runner(
+        app_name=self._agent.name,
+        agent=self._agent,
+        artifact_service=InMemoryArtifactService(),
+        session_service=InMemorySessionService(),
+        memory_service=InMemoryMemoryService(),
+    )
+
+  def get_processing_message(self) -> str:
+      return "Processing the social profile analysis request..."
+
+  def _build_agent(self) -> LoopAgent:
+    """Builds the LLM agent for the social profile analysis agent."""
+    return agent.root_agent
 
 if __name__ == '__main__':
     try:
@@ -48,8 +76,11 @@ if __name__ == '__main__':
             capabilities=capabilities,
             skills=[skill],
         )
+
+        socialAgent = SocialAgent()
+
         request_handler = DefaultRequestHandler(
-            agent_executor=SocialAgentExecutor(),
+            agent_executor=SocialAgentExecutor(socialAgent.runner,agent_card),
             task_store=InMemoryTaskStore(),
         )
 
