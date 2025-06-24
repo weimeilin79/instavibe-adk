@@ -8,20 +8,12 @@ WORKDIR /app
 
 # --- Dependency Installation ---
 # Copy only the requirements file first to leverage Docker cache
-COPY ./agents/platform_mcp_client/requirements.txt /app/requirements.txt
+COPY ./platform_mcp_client/requirements.txt /app/requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
-
-# Install the a2a common package (using pyproject.toml)
-COPY ./a2a /tmp/a2a-src
-WORKDIR /tmp/a2a-src
-RUN pip install --no-cache-dir .
-WORKDIR /app # Switch back to the main app directory
-RUN rm -rf /tmp/a2a-src # Clean up the source directory
 
 
 # --- Application Code ---
-COPY ./agents/platform_mcp_client /app/agents/platform_mcp_client
-COPY ./agents/platform_mcp_client/.env /app/agents/platform_mcp_client/.env
+COPY ./platform_mcp_client /app/agents/platform_mcp_client
 
 # --- Environment ---
 ENV PYTHONPATH=/app/agents 

@@ -2,10 +2,11 @@ import asyncio
 from contextlib import AsyncExitStack
 from dotenv import load_dotenv
 from google.adk.agents.llm_agent import LlmAgent
-from google.adk.tools.mcp_tool.mcp_toolset import MCPToolset, SseServerParams
+from google.adk.tools.mcp_tool.mcp_toolset import MCPToolset
+from google.adk.tools.mcp_tool.mcp_session_manager import SseServerParams
 import logging 
 import os
-import nest_asyncio # Import nest_asyncio
+import nest_asyncio 
 
 
 # Load environment variables from .env file in the parent directory
@@ -23,14 +24,14 @@ exit_stack: AsyncExitStack | None = None
 
 
 async def get_tools_async():
-  """Gets tools from the File System MCP Server."""
   print("Attempting to connect to MCP Filesystem server...")
-  tools, exit_stack = await MCPToolset.from_server(
+  """Gets tools from the File System MCP Server."""
+  tools =  MCPToolset(
       connection_params=SseServerParams(url=MCP_SERVER_URL, headers={})
   )
   log.info("MCP Toolset created successfully.")
 
-  return tools, exit_stack
+  return tools
  
 
 async def get_agent_async():
@@ -40,11 +41,11 @@ async def get_agent_async():
   Returns:
       tuple: (LlmAgent instance, AsyncExitStack instance for cleanup)
   """
-  tools, exit_stack = await get_tools_async()
+  tools = await get_tools_async()
 
   root_agent = LlmAgent(
-      model='gemini-2.0-flash', # Adjust model name if needed based on availability
-      name='social_agent',
+      model='gemini-2.5-flash', # Adjust model name if needed based on availability
+      name='create_post_event_agent',
       instruction="""
         You are a friendly and efficient assistant for the Instavibe social app.
         Your primary goal is to help users create posts and register for events using the available tools.
@@ -67,37 +68,27 @@ async def get_agent_async():
         - Use only the provided tools. Do not try to perform actions outside of their scope.
 
       """,
-      tools=tools,
+        tools=[tools],
   )
   print("LlmAgent created.")
 
   # Return both the agent and the exit_stack needed for cleanup
-  return root_agent, exit_stack
+  return root_agent
 
 
 async def initialize():
    """Initializes the global root_agent and exit_stack."""
-   global root_agent, exit_stack
+   global root_agent
    if root_agent is None:
        log.info("Initializing agent...")
-       root_agent, exit_stack = await get_agent_async()
+       root_agent = await get_agent_async()
        if root_agent:
            log.info("Agent initialized successfully.")
        else:
            log.error("Agent initialization failed.")
-       
    else:
        log.info("Agent already initialized.")
 
-def _cleanup_sync():
-    """Synchronous wrapper to attempt async cleanup."""
-    if exit_stack:
-        log.info("Attempting to close MCP connection via atexit...")
-        try:
-            asyncio.run(exit_stack.aclose())
-            log.info("MCP connection closed via atexit.")
-        except Exception as e:
-            log.error(f"Error during atexit cleanup: {e}", exc_info=True)
 
 
 nest_asyncio.apply()
@@ -110,4 +101,3 @@ except RuntimeError as e:
     log.error(f"RuntimeError during module level initialization (likely nested loops): {e}", exc_info=True)
 except Exception as e:
     log.error(f"Unexpected error during module level initialization: {e}", exc_info=True)
-

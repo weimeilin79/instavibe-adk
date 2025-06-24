@@ -45,7 +45,6 @@ def create_post(author_name: str, text: str, sentiment: str, base_url: str = BAS
         print(f"Error decoding JSON response from {url}. Response text: {response.text}")
         return None
 
-
 def create_event(event_name: str, description: str, event_date: str, locations: list, attendee_names: list[str], base_url: str = BASE_URL):
     """
     Sends a POST request to the /events endpoint to create a new event registration.
@@ -92,36 +91,6 @@ def create_event(event_name: str, description: str, event_date: str, locations: 
         print(f"Error decoding JSON response from {url}. Response text: {response.text}")
         return None
 
-# --- Example Usage ---
 
-if __name__ == "__main__":
-    '''
-    print("--- Creating a Post ---")
-    post_response = create_post(
-        author_name="Bob",
-        text="This post was created using a Python script!",
-        sentiment="positive"
-    )
-    if post_response:
-        print("Post Response Data:", post_response)
-    else:
-        print("Failed to create post.")
-    '''
-    print("\n--- Creating an Event Registration ---")
-    event_response = create_event(
-        event_name="Python Meetup",
-        description="A meetup for Python enthusiasts to discuss new libraries and projects.",
-        event_date="2025-07-15T18:30:00Z",
-        locations=[
-            {"name": "Community Tech Hub", "description": "Main presentation room", "latitude": 34.0522, "longitude": -118.2437, "address": "123 Tech Rd, Anytown"},
-            {"name": "Cafe Next Door", "description": "Post-meetup networking", "latitude": 34.0520, "longitude": -118.2435, "address": "125 Tech Rd, Anytown"}
-        ],
-        attendee_names=["Alice", "Bob"], # Example with multiple attendees
-        base_url="http://localhost:5001/api" 
-    )
-    if event_response:
-        print("Event Response Data:", event_response)
-    else:
-        print("Failed to create event registration.")
 
   

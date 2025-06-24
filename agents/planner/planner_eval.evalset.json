@@ -1,0 +1,167 @@
+{
+  "eval_set_id": "plan_eval",
+  "name": "plan_eval",
+  "description": null,
+  "eval_cases": [
+    {
+      "eval_id": "boston",
+      "conversation": [
+        {
+          "invocation_id": "e-668e53a4-1630-4827-8d91-b2bc3336afe2",
+          "user_content": {
+            "parts": [
+              {
+                "video_metadata": null,
+                "thought": null,
+                "inline_data": null,
+                "file_data": null,
+                "thought_signature": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "function_call": null,
+                "function_response": null,
+                "text": "Plan something for me in Boston on the weekend of May 19th 2025, and something on nightlife and shows"
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [
+              {
+                "video_metadata": null,
+                "thought": null,
+                "inline_data": null,
+                "file_data": null,
+                "thought_signature": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "function_call": null,
+                "function_response": null,
+                "text": "Okay, here's a dating plan for the weekend of May 19th, 2025, in Boston, focused on nightlife and shows:\n\n**Date Plan: Boston Nightlife & Shows (May 19-20, 2025)**\n\nThis plan focuses on enjoying Boston's nightlife scene, combining live music with unique bar experiences.\n\n**Friday, May 19th, 2025: Live Music & Speakeasy Vibes**\n\n*   **Activity 1: Squid - As Part of the Fenway Recording Sessions (18+)** Catch the electrifying performance by Squid at Brighton Music Hall. This exclusive 18+ event promises an unforgettable night of unique sound and dynamic stage presence.\n\n    *   **Name:** Brighton Music Hall\n    *   **Latitude:** 42.3504\n    *   **Longitude:** -71.1418\n    *   **Description:** Iconic music venue that hosts a variety of live performances, including up-and-coming bands and established artists.\n*   **Activity 2: Speakeasy Cocktails at Hecate:** After the show, head to Hecate for stylish and unique cocktails crafted by bartenders. It is an underground speakeasy that feels distinctly Salem, yet perfectly at home in Boston\n\n    *   **Name:** Hecate\n    *   **Latitude:** 42.3504\n    *   **Longitude:** -71.0589\n    *   **Description:** Named for the Greek goddess of magic and witchcraft, this intimate 24-seat bar offers stylish and unique cocktails\n\n**Saturday, May 20th, 2025: Arcade Bar & Improv Show**\n\n*   **Activity 1: VERSUS Arcade Bar** Start the night at VERSUS, a 1980s and 90s-style arcade haven with pinball, old-school Nintendo, Pac-Man, Skee Ball, and tons of other games. They have themed cocktails and bar food to keep your gaming energy high.\n\n    *   **Name:** VERSUS Arcade Bar\n    *   **Latitude:** 42.3522\n    *   **Longitude:** -71.0576\n    *   **Description:** An arcade bar with a retro vibe, offering a wide selection of classic arcade games and themed cocktails.\n\n*   **Activity 2: Improv Asylum:** Enjoy a night of laughter at Improv Asylum. They offer a mix of sketch comedy and improv shows that are sure to entertain.\n\n    *   **Name:** Improv Asylum\n    *   **Latitude:** 42.3661\n    *   **Longitude:** -71.0704\n    *   **Description:** Comedy club featuring improv and sketch comedy performances. Known for its quick wit and audience interaction."
+              }
+            ],
+            "role": null
+          },
+          "intermediate_data": {
+            "tool_uses": [],
+            "intermediate_responses": []
+          },
+          "creation_timestamp": 1750478254.942607
+        }
+      ],
+      "session_input": {
+        "app_name": "planner",
+        "user_id": "user",
+        "state": {}
+      },
+      "creation_timestamp": 1750478270.80955
+    },
+    {
+      "eval_id": "sanfran",
+      "conversation": [
+        {
+          "invocation_id": "e-0b2ab3ae-c61a-40f0-b2d8-ec1836b69988",
+          "user_content": {
+            "parts": [
+              {
+                "video_metadata": null,
+                "thought": null,
+                "inline_data": null,
+                "file_data": null,
+                "thought_signature": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "function_call": null,
+                "function_response": null,
+                "text": "Plan something for me in San Francisco on the weekend of May 26th 2025, and something on coffee and art"
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [
+              {
+                "video_metadata": null,
+                "thought": null,
+                "inline_data": null,
+                "file_data": null,
+                "thought_signature": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "function_call": null,
+                "function_response": null,
+                "text": "Okay, here's a dating plan suggestion for the weekend of May 26th, 2025 in San Francisco, focusing on coffee and art:\n\n**Dating Plan: Art & Coffee in SF**\n\n**Plan Description:** This plan combines the cozy atmosphere of local coffee shops with the vibrant art scene of San Francisco, offering a relaxed yet engaging experience.\n\n**1. Morning Coffee & Art Immersion:**\n\n*   **Name:** Red Door Coffee at 111 Minna Gallery\n*   **Latitude:** 37.7957\n*   **Longitude:** -122.3999\n*   **Description:** Start your date at Red Door Coffee, located within the 111 Minna Gallery. Enjoy meticulously crafted coffee while surrounded by mesmerizing artwork. This venue is dedicated to community art and culture, offering a unique blend of visual and sensory delights. Check out the current art exhibition while sipping your coffee.\n\n**2. Afternoon Mural Walk in the Mission District:**\n\n*   **Name:** Clarion Alley Mural Project\n*   **Latitude:** 37.7604\n*   **Longitude:** -122.4173\n*   **Description:** Take a stroll through Clarion Alley in the Mission District to admire the vibrant and thought-provoking murals. This alley is renowned for its ever-changing display of public art, reflecting social and political themes. It is a great place to spark conversation and enjoy the local culture.\n\n**3. Evening at The Midway:**\n\n*   **Name:** The Midway SF\n*   **Latitude:** 37.7607\n*   **Longitude:** -122.3871\n*   **Description:** The Midway is a large venue that has art exhibitions, technology displays, and culinary arts. Spend the evening exploring the art, and grab a bite to eat.\n"
+              }
+            ],
+            "role": null
+          },
+          "intermediate_data": {
+            "tool_uses": [],
+            "intermediate_responses": []
+          },
+          "creation_timestamp": 1750478294.830193
+        }
+      ],
+      "session_input": {
+        "app_name": "planner",
+        "user_id": "user",
+        "state": {}
+      },
+      "creation_timestamp": 1750478308.661944
+    },
+    {
+      "eval_id": "nyc",
+      "conversation": [
+        {
+          "invocation_id": "e-77c5c862-68e3-45f9-90f6-3a0959aa5538",
+          "user_content": {
+            "parts": [
+              {
+                "video_metadata": null,
+                "thought": null,
+                "inline_data": null,
+                "file_data": null,
+                "thought_signature": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "function_call": null,
+                "function_response": null,
+                "text": "Plan something for me in New York City on the weekend of May 26th 2025, and something on outdoor and food"
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [
+              {
+                "video_metadata": null,
+                "thought": null,
+                "inline_data": null,
+                "file_data": null,
+                "thought_signature": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "function_call": null,
+                "function_response": null,
+                "text": "Okay, here's a plan for a fun and delicious date in NYC, keeping your interests in mind for the weekend of May 26th, 2025:\n\n**Plan:** A mix of outdoor delights and foodie adventures.\n\n1.  **Morning Market Stroll:** (May 24, 2025)\n\n    *   **Activity:** Start your weekend with a visit to the **Down to Earth Morningside Park Farmers Market**. Enjoy the vibrant atmosphere, sample local produce, and pick up some delicious treats for a picnic later in the day.\n    *   **Location:** 237-331 Manhattan Ave, New York, NY 10026, USA\n    *   **Latitude:** 40.8053\n    *   **Longitude:** -73.9623\n    *   **Description:** A year-round outdoor farmers market offering fresh, local products.\n2.  **Central Park Picnic:**\n\n    *   **Activity:** After the market, head to **Central Park** for a scenic picnic. **East Meadow** offers a quiet and serene atmosphere.\n    *   **Location:** Central Park, New York, NY\n    *   **Latitude:** 40.7829\n    *   **Longitude:** -73.9654\n    *   **Description:** A large green space in the heart of Manhattan, perfect for a relaxing picnic. East Meadow is dog-friendly and offers scenic views.\n3.  **Rooftop Views & Cocktails:**\n\n    *   **Activity:** As the sun begins to set, make your way to a rooftop bar for drinks with a view. **Monarch Rooftop** offers amazing views of the Manhattan skyline and the Empire State Building.\n    *   **Location:** 71 W 35th St 18th floor, New York, NY 10001\n    *   **Latitude:** 40.7490\n    *   **Longitude:** -73.9853\n    *   **Description:** An extravagant penthouse lounge with floor-to-ceiling windows, offering specialty cocktails and a tapas menu. It's known for its in-house mixologist and fresh, inventive drinks.\n"
+              }
+            ],
+            "role": null
+          },
+          "intermediate_data": {
+            "tool_uses": [],
+            "intermediate_responses": []
+          },
+          "creation_timestamp": 1750478360.965003
+        }
+      ],
+      "session_input": {
+        "app_name": "planner",
+        "user_id": "user",
+        "state": {}
+      },
+      "creation_timestamp": 1750478384.377376
+    }
+  ],
+  "creation_timestamp": 1750478224.7986963
+}

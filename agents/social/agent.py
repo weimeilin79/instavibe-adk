@@ -14,60 +14,31 @@ from typing import Optional
 # Get a logger instance
 log = logging.getLogger(__name__)
 
-class CheckCondition(BaseAgent): 
+class CheckCondition(BaseAgent):
     async def _run_async_impl(self, ctx: InvocationContext) -> AsyncGenerator[Event, None]:
         #log.info(f"Checking status: {ctx.session.state.get("summary_status", "fail")}")
         log.info(f"Summary: {ctx.session.state.get("summary")}")
-        
-        status = ctx.session.state.get("summary_status", "fail").strip() 
-        is_done = (status == "completed") 
-                
-        #log.info(f"Checking is_done status: {is_done}")
-        #log.info(f"Parts: {ctx.user_content.parts[0].text}")
-        yield Event(author=self.name, actions=EventActions(escalate=is_done)) 
 
+        status = ctx.session.state.get("summary_status", "fail").strip()
+        is_done = (status == "completed")
 
-def modify_output_after_agent(callback_context: CallbackContext) -> Optional[types.Content]:
-
-    agent_name = callback_context.agent_name
-    invocation_id = callback_context.invocation_id
-    current_state = callback_context.state.to_dict()
-    current_user_content = callback_context.user_content
-    print(f"[Callback] Exiting agent: {agent_name} (Inv: {invocation_id})")
-    print(f"[Callback] Current summary_status: {current_state.get("summary_status")}")
-    print(f"[Callback] Current Content: {current_user_content}")
-    
-    status = current_state.get("summary_status").strip() 
-    is_done = (status == "completed") 
-    # Retrieve the final summary from the state
-    
-    final_summary = current_state.get("summary")
-    print(f"[Callback] final_summary: {final_summary}")
-    if final_summary and is_done and isinstance(final_summary, str):
-        log.info(f"[Callback] Found final summary, constructing output Content.")
-        # Construct the final output Content object to be sent back
-        return types.Content(role="model", parts=[types.Part(text=final_summary.strip())])
-    else:
-        log.warning("[Callback] No final summary found in state or it's not a string.")
-        # Optionally return a default message or None if no summary was generated
-        return None
-    
+        yield Event(author=self.name, actions=EventActions(escalate=is_done))
 
 profile_agent = LlmAgent(
     name="profile_agent",
-    model="gemini-2.0-flash",
+    model="gemini-2.5-flash",
     description=(
-        "Agent to answer questions about the this person's social profile. User will ask person's profile using their name, make sure to fetch the id before getting other data."
+        "Agent to answer questions about the this person social profile. Provide the person's profile using their name, make sure to fetch the id before getting other data."
     ),
     instruction=(
-        "You are a helpful agent who can answer user questions about this person's social profile."
+        "You are a helpful agent to answer questions about the this person social profile. You'll be given a list of names, provide the person's profile using their name, make sure to fetch the id before getting other data. Get one person at a time, start with the first one on the list, and skip if already provided. return this person's result"
     ),
     tools=[get_person_posts,get_person_friends,get_person_id_by_name,get_person_attended_events],
 )
 
 summary_agent = LlmAgent(
     name="summary_agent",
-    model="gemini-2.0-flash",
+    model="gemini-2.5-flash",
     description=(
         "Generate a comprehensive social summary as a single, cohesive paragraph. This summary should cover the activities, posts, friend networks, and event participation of one or more individuals. If multiple profiles are analyzed, the paragraph must also identify and integrate any common ground found between them."
     ),
@@ -107,25 +78,49 @@ summary_agent = LlmAgent(
     output_key="summary"
 )
 
-
 check_agent = LlmAgent(
     name="check_agent",
-    model="gemini-2.0-flash",
+    model="gemini-2.5-flash",
     description=(
         "Check if everyone's social profile are summarized and has been generated. Output 'completed' or 'pending'."
     ),
     output_key="summary_status"
 )
 
+def modify_output_after_agent(callback_context: CallbackContext) -> Optional[types.Content]:
+
+    agent_name = callback_context.agent_name
+    invocation_id = callback_context.invocation_id
+    current_state = callback_context.state.to_dict()
+    current_user_content = callback_context.user_content
+    print(f"[Callback] Exiting agent: {agent_name} (Inv: {invocation_id})")
+    print(f"[Callback] Current summary_status: {current_state.get("summary_status")}")
+    print(f"[Callback] Current Content: {current_user_content}")
+
+    status = current_state.get("summary_status").strip()
+    is_done = (status == "completed")
+    # Retrieve the final summary from the state
+
+    final_summary = current_state.get("summary")
+    print(f"[Callback] final_summary: {final_summary}")
+    if final_summary and is_done and isinstance(final_summary, str):
+        log.info(f"[Callback] Found final summary, constructing output Content.")
+        # Construct the final output Content object to be sent back
+        return types.Content(role="model", parts=[types.Part(text=final_summary.strip())])
+    else:
+        log.warning("[Callback] No final summary found in state or it's not a string.")
+        # Optionally return a default message or None if no summary was generated
+        return None
+
 root_agent = LoopAgent(
-    name="InterativePipeline",
+    name="InteractivePipeline",
     sub_agents=[
         profile_agent,
-        summary_agent, 
+        summary_agent,
         check_agent,
         CheckCondition(name="Checker")
     ],
     description="Find everyone's social profile on events, post and friends",
     max_iterations=10,
-    after_agent_callback=modify_output_after_agent 
+    after_agent_callback=modify_output_after_agent
 )

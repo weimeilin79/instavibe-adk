@@ -6,10 +6,8 @@ import os
 
 load_dotenv()
 
-ORCHESTRATE_AGENT_ID = os.environ.get('ORCHESTRATE_AGENT_ID',"projects/789872749985/locations/us-central1/reasoningEngines/7321524784058073088")
-
+ORCHESTRATE_AGENT_ID = os.environ.get('ORCHESTRATE_AGENT_ID')
 agent_engine = agent_engines.get(ORCHESTRATE_AGENT_ID)
-
 
 
 def call_agent_for_plan(user_name, planned_date, location_n_perference, selected_friend_names_list):
@@ -30,55 +28,29 @@ def call_agent_for_plan(user_name, planned_date, location_n_perference, selected
     # Constructing an example for the prompt, e.g., ["Alice", "Bob"]
     friends_list_example_for_prompt = json.dumps(selected_friend_names_list)
 
-    prompt_message = f"""
-    You are an expert event planner for a user named {user_name}.
-    Your task is to design a fun and personalized night out.
+    prompt_message = f"""Plan a personalized night out for {user_name} with friends {selected_friend_names_str} on {planned_date}, with the location or preference being "{location_n_perference}".
 
-    Here are the details for the plan:
-    - Friends to invite: {selected_friend_names_str}
-    - Desired date: {planned_date}
-    - Location idea or general preference: "{location_n_perference}"
+    Analyze friend interests (if possible, use Instavibe profiles or summarized interests) to create a tailored plan.  Ensure the plan includes the date {planned_date}.
 
-    Your process should be:
-    1. Analyze the provided friend names. If you have access to a tool to get their Instavibe profiles or summarized interests, please use it.
-    2. Based on their potential interests (or general good taste if profiles are unavailable), create a tailored plan for the outing.
-    3. Ensure the plan includes the original `planned_date` provided: {planned_date}.
-    4. Organize all details into a structured JSON format as specified below.
-
-    The user wants a comprehensive plan that includes:
-    - The list of invited friends.
-    - A catchy and descriptive name for the event.
-    - The exact planned date for the event (which is {planned_date}).
-    - A summary of what the group will do.
-    - Specific recommended spots (e.g., restaurants, bars, activity venues) with their names, (if possible, approximate latitude/longitude for mapping, and address), and a brief description of why it fits the plan.
-    - A short, exciting message that {user_name} can send to {selected_friend_names_str} to get them excited about the event.
-
-    IMPORTANT FINAL OUTPUT INSTRUCTION:
-    After all necessary agent tasks in your plan are completed, your **final response to this entire request MUST be a single, complete JSON object**.
-    This JSON object should strictly adhere to the following structure. You are responsible for gathering all information and constructing this JSON:
+    Output the entire plan in a SINGLE, COMPLETE JSON object with the following structure.  **CRITICAL: The FINAL RESPONSE MUST BE ONLY THIS JSON.  If any fields are missing or unavailable, INVENT them appropriately to complete the JSON structure.  Do not return any conversational text or explanations.  Just the raw, valid JSON.**
 
     {{
-      "friends_name_list": {friends_list_example_for_prompt}, // This should be an array of strings, reflecting the names: {selected_friend_names_str}
-      "event_name": "string",        // Synthesize a concise, descriptive name for the overall planned outing (e.g., "{selected_friend_names_str}'s Epic City Adventure")
-      "event_date": "{planned_date}", // CRITICAL: Include the planned_date here in ISO 8601 format. This value is: {planned_date}
-      "event_description": "string", // Provide an engaging summary of the planned activities and overall vibe of the event.
-      "locations_and_activities": [  // This array should detail each step of the plan.
+    "friends_name_list": {friends_list_example_for_prompt}, //  Array of strings: {selected_friend_names_str}
+    "event_name": "string",        // Concise, descriptive name for the event (e.g., "{selected_friend_names_str}'s Night Out")
+    "event_date": "{planned_date}", // Date in ISO 8601 format.
+    "event_description": "string", // Engaging summary of planned activities.
+    "locations_and_activities": [  // Array detailing each step of the plan.
         {{
-          "name": "string",          // Name of the specific place, venue, or activity.
-          "latitude": 12.345,        // Approximate latitude (e.g., 34.0522) or null if not available.
-          "longitude": -67.890,      // Approximate longitude (e.g., -118.2437) or null if not available.
-          "address": "string or null", // Physical address if available, otherwise null.
-          "description": "string"    // Brief description of this location/activity and why it's part of the plan.
+        "name": "string",          // Name of the place, venue, or activity.
+        "latitude": 12.345,        // Approximate latitude (e.g., 34.0522) or null if not available.
+        "longitude": -67.890,      // Approximate longitude (e.g., -118.2437) or null if not available.
+        "address": "string or null", // Physical address if available, otherwise null.
+        "description": "string"    // Description of this location/activity.
         }}
-        // Add more location/activity objects as needed for the plan.
-      ],
-      "post_to_go_out": "string"     // MUST generate a short, catchy, and exciting text message
-                                   // that {user_name} can send to the friends to invite them and build anticipation.
-                                   // Make it sound like it's from {user_name}.
+        // Add more location/activity objects as needed.
+    ],
+    "post_to_go_out": "string"     // Short, catchy, and exciting text message from {user_name} to invite friends.
     }}
-
-    Your final response for this entire request MUST be ONLY the JSON object described above.
-    Do NOT include any conversational text, explanations, or markdown formatting like ```json before or after the JSON object itself. Just the raw, valid JSON.
     """
 
     print(f"--- Sending Prompt to Agent ---") 
@@ -89,10 +61,12 @@ def call_agent_for_plan(user_name, planned_date, location_n_perference, selected
 
     yield {"type": "thought", "data": f"--- Agent Response Stream Starting ---"}
     try:
-        for event_idx, event in enumerate(agent_engine.stream_query(
-            user_id=user_id,
-            message=prompt_message,
-        )):
+        for event_idx, event in enumerate(
+            agent_engine.stream_query(
+                user_id=user_id,
+                message=prompt_message,
+            )
+        ):
             print(f"\n--- Event {event_idx} Received ---") # Console
             pprint.pprint(event) # Console
             try:
@@ -170,9 +144,9 @@ def post_plan_event(user_name, confirmed_plan, edited_invite_message, agent_sess
     You are an Orchestrator assistant for the Instavibe platform. User '{user_name}' has finalized an event plan and wants to:
     1. Create the event on Instavibe.
     2. Create an invite post for this event on Instavibe.
-
-    You have tools like `list_remote_agents` to discover available specialized agents and `send_task(agent_name: str, message: str)` to delegate tasks to them.
-    Your primary role is to understand the user's overall goal, identify the necessary steps, select the most appropriate remote agent(s) for those steps, and then send them clear instructions.
+    
+    You have a send_message tool to delegate tasks to your list of available specialized agents.
+    Your primary role is to understand the user's overall goal, identify the necessary steps, select the most appropriate remote agent(s) from your list for those steps, and confirm the successful completion of each step.
 
     Confirmed Plan:
     ```json
@@ -185,33 +159,23 @@ def post_plan_event(user_name, confirmed_plan, edited_invite_message, agent_sess
     Your explicit tasks are, in this exact order:
 
     TASK 1: Create the Event on Instavibe.
-    - First, identify a suitable remote agent that is capable of creating events on the Instavibe platform. You should use your `list_remote_agents` tool if you need to refresh your knowledge of available agents and their capabilities.
-    - Once you have selected an appropriate agent, you MUST use your tool to instruct that agent to create the event.
-    - The `message` you send to the agent for this task should be a clear, natural language instruction. This message MUST include all necessary details for event creation, derived from the "Confirmed Plan" JSON:
-        - Event Name: "{confirmed_plan.get('event_name', 'Unnamed Event')}"
-        - Event Description: "{confirmed_plan.get('event_description', 'No description provided.')}"
-        - Event Date: "{confirmed_plan.get('event_date', 'MISSING_EVENT_DATE_IN_PLAN')}" (ensure this is in a standard date/time format like ISO 8601)
-        - Locations: {json.dumps(confirmed_plan.get('locations_and_activities', []))} (describe these locations clearly to the agent)
-        - Attendees: {json.dumps(list(set(confirmed_plan.get('friends_name_list', []) + [user_name])))} (this list includes the user '{user_name}' and their friends)
-    - Narrate your thought process: which agent you are selecting (or your criteria if you can't name it), and the natural language message you are formulating for the tool to create the event.
-    - After the  tool call is complete, briefly acknowledge its success based on the tool's response.
+    - Identify the most suitable remote agent from your available list that is capable of creating events.
+    - Use your send_message tool to instruct that agent to create the event using the details from the "Confirmed Plan" JSON.
+    - Narrate your thought process and the natural language message you are sending.
+    - You must wait for the tool's response. If the response confirms success, state that clearly and proceed to TASK 2. If the response indicates failure or an error, you must STOP the entire process and report the exact error to the user.
 
     TASK 2: Create the Invite Post on Instavibe.
-    - Only after TASK 1 (event creation) is confirmed as  successful, you MUST use your tool again.
-    - The `message` you send to the agent for this task should be a clear, natural language instruction to create a post. This message MUST include:
-        - The author of the post: "{user_name}"
-        - The content of the post: The "Invite Message" provided above ("{edited_invite_message}")
-        - An instruction to associate this post with the event created in TASK 1 (e.g., by referencing its name: "{confirmed_plan.get('event_name', 'Unnamed Event')}").
-        - Indicate the sentiment is "positive" as it's an invitation.
-    - Narrate the natural language message you are formulating for the `send_task` tool to create the post.
-    - After the `send_task` tool call is (simulated as) complete, briefly acknowledge its success.
+    - Only after TASK 1 is confirmed as successful by the tool's response, you MUST use your send_message tool again.
+    - Formulate a clear, natural language instruction for the agent to create a post, including the author ('{user_name}'), the content ("{edited_invite_message}"), an instruction to associate it with the event created in TASK 1, and a "positive" sentiment.
+    - Narrate the message you are formulating for the tool.
+    - You must wait for the tool's response. Acknowledge its success or failure based directly on this response.
 
     IMPORTANT INSTRUCTIONS FOR YOUR BEHAVIOR:
-    - Your primary role here is to orchestrate these two actions by selecting an appropriate remote agent and sending it clear, natural language instructions via your  tool.
-    - Your responses during this process should be a stream of consciousness, primarily narrating your agent selection (if applicable), the formulation of your natural language messages for , and theiroutcomes.
-    - Do NOT output any JSON yourself. Your output must be plain text only, describing your actions.
-    - Conclude with a single, friendly success message confirming that you have (simulated) instructing the remote agent to create both the event and the post. For example: "Alright, I've instructed the appropriate Instavibe agent to create the event '{confirmed_plan.get('event_name', 'Unnamed Event')}' and to make the invite post for {user_name}!"
-
+    - Your primary role is to orchestrate these two actions by sending clear instructions and **verifying their completion**.
+    - Your responses must be a stream of consciousness, narrating your agent selection, your message formulation, and the confirmed outcomes from the tool responses.
+    - Do NOT output any JSON yourself.
+    - Conclude with a single, friendly success message only if both tasks have been confirmed as successfully completed by the remote agent. For example: "Alright, I've received confirmation from the Instavibe agent that the event '{confirmed_plan.get('event_name', 'Unnamed Event')}' has been created and the invite post has been published for {user_name}!"
+    
     """
 
     yield {"type": "thought", "data": f"Sending posting instructions to agent for {user_name}'s event."}
@@ -220,10 +184,12 @@ def post_plan_event(user_name, confirmed_plan, edited_invite_message, agent_sess
     accumulated_response_text = ""
 
     try:
-        for event_idx, event in enumerate(agent_engine.stream_query(
-            user_id=agent_session_user_id, # Use the agent session ID
-            message=prompt_message,
-        )):
+        for event_idx, event in enumerate(
+            agent_engine.stream_query(
+                user_id=agent_session_user_id,
+                message=prompt_message,
+            )
+        ):
             print(f"\n--- Post Event - Agent Event {event_idx} Received ---") # Console
             pprint.pprint(event) # Console
             try:
