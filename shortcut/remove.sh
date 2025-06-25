@@ -10,6 +10,9 @@
 # Stop the script if any command fails (unless handled with '|| true')
 set -e
 
+# --- User-configurable variables ---
+REPO_DIR_NAME="instavibe-adk"
+
 # --- Color Codes for Logging ---
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -29,7 +32,7 @@ fi
 
 # --- Step 1: Source Environment Variables ---
 echo -e "\n${GREEN}---> Sourcing environment variables...${NC}"
-ENV_FILE=~/instavibe-bootstrap/set_env.sh
+ENV_FILE=~/$REPO_DIR_NAME/set_env.sh
 if [ -f "$ENV_FILE" ]; then
     # shellcheck source=/dev/null
     . "$ENV_FILE"
@@ -41,12 +44,12 @@ fi
 
 # --- Step 2: Delete Agent Engine ---
 echo -e "\n${GREEN}---> Deleting Vertex AI Agent Engine...${NC}"
-UTILS_DIR=~/instavibe-bootstrap/utils
+UTILS_DIR=~/$REPO_DIR_NAME/utils
 if [ -d "$UTILS_DIR" ]; then
     cd "$UTILS_DIR"
     # shellcheck source=/dev/null
-    source ~/instavibe-bootstrap/env/bin/activate
-    export ORCHESTRATE_AGENT_ID=$(cat ~/instavibe-bootstrap/instavibe/temp_endpoint.txt)
+    source ~/$REPO_DIR_NAME/env/bin/activate
+    export ORCHESTRATE_AGENT_ID=$(cat ~/$REPO_DIR_NAME/instavibe/temp_endpoint.txt)
     echo "Attempting to delete Agent Engine with ID: ${ORCHESTRATE_AGENT_ID}"
     
     # Run the Python script but continue even if it fails (e.g., if the agent is already deleted)
@@ -112,7 +115,6 @@ fi
 
 # --- Step 8: Delete Local Workshop Files ---
 echo -e "\n${GREEN}---> Removing local workshop directories and files...${NC}"
-rm -rf ~/instavibe-bootstrap
 rm -rf ~/a2a-inspector
 rm -f ~/mapkey.txt
 rm -f ~/project_id.txt
@@ -121,3 +123,5 @@ echo "Local directories and files removed."
 
 echo -e "\n${GREEN}✅ InstaVibe teardown script finished.${NC}"
 echo "Note: Some Google Cloud resources may take a few minutes to be fully de-provisioned."
+
+
