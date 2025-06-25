@@ -7,8 +7,6 @@
 # WARNING: This operation is destructive and cannot be undone.
 #
 
-# Stop the script if any command fails (unless handled with '|| true')
-set -e
 
 # --- User-configurable variables ---
 REPO_DIR_NAME="instavibe-adk"
