@@ -8,7 +8,7 @@ This demo showcases Google's Agent stack, ADK, MCP, and A2A with a common story 
 
 This project is the result of completing the [InstaVibe ADK Multi-Agent Codelab](https://codelabs.devsite.corp.google.com/instavibe-adk-multi-agents/instructions).
 
-(![alt Title](https://codelabs.devsite.corp.google.com/static/instavibe-adk-multi-agents/img/01-01-title_1920.png))
+(![alt Title](https://codelabs.developers.google.com/static/instavibe-adk-multi-agents/img/01-01-title_1920.png))
 
 ## Directory Structure
 
@@ -22,7 +22,7 @@ This project is the result of completing the [InstaVibe ADK Multi-Agent Codelab]
 
 ## Key Architectural Elements and Technologies
 
-(![alt Architecture](https://codelabs.devsite.corp.google.com/static/instavibe-adk-multi-agents/img/02-01-architecture_1920.png))
+(![alt Architecture](https://codelabs.developers.google.com/static/instavibe-adk-multi-agents/img/02-01-architecture_1920.png))
 
 ### Google Cloud Platform (GCP)
 
