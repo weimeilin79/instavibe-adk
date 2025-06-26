@@ -1,4 +1,4 @@
-# InstaVibe ADK - Multi-Agent Demo
+# Google's Agent Stack in Action:ADK, A2A, MCP on Google Cloud - InstaVibe
 
 This repository contains the completed demo for the "Build a multi-agent system with the ADK" codelab.
 
@@ -6,7 +6,7 @@ This repository contains the completed demo for the "Build a multi-agent system 
 
 This demo showcases Google's Agent stack, ADK, MCP, and A2A with a common story to introduce agents and LLM into an existing system. This system is InstaVibe, a conceptual application that helps users, particularly those who are more introverted, connect with others and discover events. It uses a system of autonomous agents to proactively find events, manage schedules, and facilitate social interactions.
 
-This project is the result of completing the [InstaVibe ADK Multi-Agent Codelab](https://codelabs.devsite.corp.google.com/instavibe-adk-multi-agents/instructions).
+This project is the result of completing the [InstaVibe ADK Multi-Agent Codelab](https://codelabs.developers.google.com/instavibe-adk-multi-agents/instructions).
 
 ![alt Title](https://codelabs.developers.google.com/static/instavibe-adk-multi-agents/img/01-01-title_1920.png)
 
