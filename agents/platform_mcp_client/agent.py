@@ -2,7 +2,8 @@ import asyncio
 from contextlib import AsyncExitStack
 from dotenv import load_dotenv
 from google.adk.agents.llm_agent import LlmAgent
-from google.adk.tools.mcp_tool.mcp_toolset import MCPToolset, SseServerParams
+from google.adk.tools.mcp_tool.mcp_toolset import MCPToolset
+from google.adk.tools.mcp_tool.mcp_session_manager import SseServerParams
 import logging 
 import os
 import nest_asyncio 
@@ -42,8 +43,8 @@ async def get_agent_async():
   tools = await get_tools_async()
 
   root_agent = LlmAgent(
-      model='gemini-2.0-flash', # Adjust model name if needed based on availability
-      name='social_agent',
+      model='gemini-2.5-flash', # Adjust model name if needed based on availability
+      name='create_post_event_agent',
       instruction="""
         You are a friendly and efficient assistant for the Instavibe social app.
         Your primary goal is to help users create posts and register for events using the available tools.
@@ -84,15 +85,9 @@ async def initialize():
            log.info("Agent initialized successfully.")
        else:
            log.error("Agent initialization failed.")
-       
    else:
        log.info("Agent already initialized.")
 
-def _cleanup_sync():
-    """Synchronous wrapper to attempt async cleanup."""
-    log.info("MCP connection cleanup is now handled externally.")
-    # No specific cleanup action needed here as exit_stack is managed elsewhere.
-    pass 
 
 
 nest_asyncio.apply()
@@ -105,4 +100,3 @@ except RuntimeError as e:
     log.error(f"RuntimeError during module level initialization (likely nested loops): {e}", exc_info=True)
 except Exception as e:
     log.error(f"Unexpected error during module level initialization: {e}", exc_info=True)
-
